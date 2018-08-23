@@ -1,0 +1,2310 @@
+delimiter $$
+create procedure INICIAR_S( in pid_usuario int)
+
+BEGIN
+
+	DECLARE CS INT;
+	DECLARE EC INT;
+	DECLARE EI INT;
+	DECLARE IDR INT;
+
+	SET CS=0;
+	SET EC=0;
+	SET EI=0;
+	SET IDR=0;
+
+				select id_role into IDR from usuarios where id_usuario=pid_usuario;
+				if IDR=2 then
+
+					select IF(ISNULL(max(id_sesion)),0,max(id_sesion)) into CS from t_sesiones;
+					if CS > 0 then
+
+						select estado_i into EI from t_sesiones where id_sesion=CS;
+						select estado_c into EC from t_sesiones where id_sesion=CS;
+
+						if EC=1 && EI=2 then
+							insert into t_sesiones values(null,now(),1,null,2,pid_usuario,0);
+						end if;
+
+					else
+					insert into t_sesiones values(null,now(),1,null,2,pid_usuario,0);
+					end if;
+
+				end if;
+END;
+
+
+/*************************************************************************************************************/
+delimiter $$
+create procedure ENTRADAS(in pid_ingrediente int, in pcantidad float,in fecha_cc datetime,in pid_proveedor int)
+
+BEGIN
+
+	DECLARE IDI INT;
+	DECLARE IDP INT;
+	DECLARE ESTI INT;
+
+	SET IDI=0;
+	SET IDP=0;
+	SET ESTI=0;
+
+	select id_ingrediente into IDI from ingredientes where pid_ingrediente=id_ingrediente;
+	if IDI > 0 then
+
+		select id_proveedor into IDP from proveedores where pid_proveedor=id_proveedor;
+		if IDP > 0 then
+
+			select estado into ESTI from ingredientes where id_ingrediente=IDI;
+			if ESTI = 1 then
+				insert into entradas values (null,IDI,pcantidad,Curdate(),fecha_cc,IDP,1);
+				update ingredientes set cantidad=cantidad+pcantidad,fecha_c=fecha_cc where id_ingrediente=IDI;
+				select 'Se han agregado las existencias correcta mente' as mensaje;
+			else
+				insert into entradas values (null,IDI,pcantidad,Curdate(),fecha_cc,IDP,1);
+				update ingredientes set cantidad=pcantidad,fecha_c=fecha_cc where id_ingrediente=IDI;
+				select 'Se han agregado las existencias correcta mente' as mensaje;
+			end if;
+		else
+			select 'El proveedor no existe' as mensaje;
+		end if;
+	else
+		select 'El ingrediente no existe' as mensaje;
+	end if;
+
+END;
+/*Evento de tiempo de descomposicion */
+/*************************************************************************************************************/
+delimiter $$
+create procedure LENTRADAS(in pid_entrada int)
+
+BEGIN
+
+	DECLARE IDE INT;
+	DECLARE ESTE INT;
+
+	SET IDE=0;
+	SET ESTE=0;
+
+	select id_entrada into IDE from entradas where id_entrada=pid_entrada;
+	if IDE > 0 then
+		select estado into ESTE from entradas where id_entrada=IDE;
+		if ESTE=1 then
+			update entradas set estado=2 where id_entrada=IDE;
+			select 'Baja exitosa' as mensaje;
+		else
+			select 'La entrada ha rebasado su fecha de caducidad' as mensaje;
+		end if;
+	else
+		select 'La entrada no existe' as mensaje;
+	end if;
+END;
+/*************************************************************************************************************/
+delimiter $$
+create procedure LENTRADASC(in pid_entrada int, in pcantidad float)
+
+BEGIN
+
+	DECLARE IDE INT;
+	DECLARE ESTE INT;
+	DECLARE IDI INT;
+	DECLARE CANI FLOAT;
+	DECLARE CANE FLOAT;
+
+	SET IDE=0;
+	SET ESTE=0;
+	SET IDI=0;
+	SET CANI=0;
+	SET CANE=0;
+
+	select id_entrada into IDE from entradas where id_entrada=pid_entrada;
+	if IDE > 0 then
+		select estado into ESTE from entradas where id_entrada=IDE;
+		if ESTE=3 then
+			select id_ingrediente into IDI from entradas where id_entrada=IDE;
+			if IDI > 0 then
+				select cantidad into CANI from ingredientes where id_ingrediente=IDI;
+				if CANi >= pcantidad then
+					select cantidad_e into CANE from entradas where id_entrada=IDE;
+					if CANE >= pcantidad then
+						update entradas set estado=4 where id_entrada=IDE;
+						update ingredientes set cantidad=cantidad-pcantidad where id_ingrediente=IDI;
+						select 'Baja existosa' as mensaje;
+					else
+						select 'La cantidad a remover no puede ser mayor a la establecida en la entrada' as mensaje;
+					end if;
+				else
+					select 'La cantidad a remover no puede ser mayor a la establecida en el stock' as mensaje;
+				end if;
+			else
+				select 'El ingrediente no existe' as mensaje;
+			end if;
+		else
+			select 'Los ingredientes a un se encuentran en buen estado' as mensaje;
+		end if;
+	else
+		select 'La entrada no existe' as mensaje;
+	end if;
+END;
+/*************************************************************************************************************/
+delimiter $$
+create procedure RESTARIV(in pid_venta int,in pid_ingrediente int, in pcantidad float)
+
+BEGIN
+
+	DECLARE IDV INT;
+	DECLARE IDI INT;
+	DECLARE CANI FLOAT;
+
+	SET IDV=0;
+	SET IDI=0;
+	SET CANI=0;
+
+	select id_venta into IDV from ventas where id_venta=pid_venta;
+	if IDV > 0 then
+		select id_ingrediente into IDI from ingredientes where id_ingrediente=pid_ingrediente;
+		if IDI > 0 then
+			select cantidad into CANI from ingredientes where id_ingrediente=IDI;
+			if CANI > pcantidad then
+				update ingredientes set cantidad=cantidad-pcantidad where id_ingrediente=IDI;
+				select 'ingredientes Removidos' as mensaje;
+			else
+				select 'La cantidad a remover no puede ser mayor al stock' as mensaje;
+			end if;
+		else
+			select 'El ingrediente no existe' as mensaje;
+		end if;
+	else
+		select 'La venta no existe' as mensaje;
+	end if;
+END;
+/*************************************************************************************************************/
+delimiter $$
+create procedure RESTARI(in pid_ingrediente int, in pcantidad float)
+
+BEGIN
+
+	DECLARE IDI INT;
+	DECLARE CANI FLOAT;
+
+	SET IDI=0;
+	SET CANI=0;
+
+		select id_ingrediente into IDI from ingredientes where id_ingrediente=pid_ingrediente;
+		if IDI > 0 then
+			select cantidad into CANI from ingredientes where id_ingrediente=IDI;
+			if CANI > pcantidad then
+				update ingredientes set cantidad=cantidad-pcantidad where id_ingrediente=IDI;
+				select 'Ingredientes Removidos' as mensaje;
+			else
+				select 'La cantidad a remover no puede ser mayor al stock' as mensaje;
+			end if;
+		else
+			select 'El ingrediente no existe' as mensaje;
+		end if;
+END;
+/*************************************************************************************************************/
+DELIMITER $$
+CREATE EVENT VerificacionIngrediente
+on SCHEDULE EVERY 1 DAY STARTS '2018-03-28 22:00:00'
+DO
+BEGIN
+		update ingredientes set estado_c=2 where fecha_c-curdate()=5 and cantidad>0;
+		update ingredientes set estado_c=3 where fecha_c-curdate()=3 and cantidad>0;
+		update ingredientes set estado_c=4 where fecha_c-curdate()=1 and cantidad>0;
+		update ingredientes SET estado_c=5,estado=2 where fecha_c<Curdate() and cantidad>0;
+END;
+
+
+/*Ejemplos de consultas de tiempo
+select fecha_c from entradas where fecha_c=curdate();
+update entradas set estado=3 where fecha_c-curdate()=2;
+*/
+/*************************************************************************************************************/
+DELIMITER $$
+CREATE EVENT VerificacionEntrada
+on SCHEDULE EVERY 1 DAY STARTS '2018-03-28 22:00:00'
+DO
+BEGIN
+		update entradas SET estado=3 where fecha_c<Curdate();
+END;
+
+
+/*Ejemplos de consultas de tiempo
+select fecha_c from entradas where fecha_c=curdate();
+update entradas set estado=3 where fecha_c-curdate()=2;
+*/
+/*************************************************************************************************************/
+delimiter $$
+create procedure MODIFICAR_C_C( in pid_complemento INT,in pid_cuenta INT)
+
+BEGIN
+
+	DECLARE IDC INT;
+	DECLARE IDCU INT;
+	DECLARE ES INT;
+	DECLARE SUB FLOAT;
+	DECLARE IDCUA INT;
+
+	SET IDC=0;
+	SET IDCU=0;
+	SET ES=0;
+	SET SUB=0;
+	SET IDCUA=0;
+
+		select id_complemento into IDC from complementos where id_complemento=pid_complemento;
+		if IDC > 0 THEN
+			select id_cuenta into IDCU from cuentas where id_cuenta=pid_cuenta;
+			IF IDCU > 0 THEN
+				select estado into ES from cuentas where id_cuenta=IDCU;
+				if ES = 1 THEN
+					select subtotal into SUB from complementos where id_complemento=pid_complemento;
+					select id_cuenta into IDCUA from complementos where id_complemento=pid_complemento;
+					update cuentas set subtotal=subtotal-SUB where id_cuenta=IDCUA;
+
+					update complementos set id_cuenta=pid_cuenta where id_complemento=pid_complemento;
+					update cuentas set subtotal=subtotal+SUB where id_cuenta=pid_cuenta;
+					select 'Se ha efectuado el cambio' as mensaje;
+				else
+				select 'La cuenta se encuntra cancelada o adeudada' as mensaje;
+				end if;
+			else
+			select 'La cuenta no existe' as mensaje;
+			END IF;
+		else
+		select 'La venta no existe' as mensaje;
+		end IF;
+
+END;
+/*************************************************************************************************************/
+/*************************************************************************************************************/
+delimiter $$
+create procedure MODIFICAR_V( in pid_venta INT,in pid_cuenta INT)
+
+BEGIN
+
+	DECLARE IDV INT;
+	DECLARE IDCU INT;
+	DECLARE ES INT;
+	DECLARE SUB FLOAT;
+	DECLARE IDCUA INT;
+
+	SET IDV=0;
+	SET IDCU=0;
+	SET ES=0;
+	SET SUB=0;
+	SET IDCUA=0;
+
+		select id_venta into IDV from ventas where id_venta=pid_venta;
+		if IDV > 0 THEN
+			select id_cuenta into IDCU from cuentas where id_cuenta=pid_cuenta;
+			IF IDCU > 0 THEN
+				select estado into ES from cuentas where id_cuenta=IDCU;
+				if ES = 1 THEN
+					select subtotal into SUB from ventas where id_venta=pid_venta;
+					select id_cuenta into IDCUA from ventas where id_venta=pid_venta;
+					update cuentas set subtotal=subtotal-SUB where id_cuenta=IDCUA;
+
+					update ventas set id_cuenta=pid_cuenta where id_venta=pid_venta;
+					update cuentas set subtotal=subtotal+SUB where id_cuenta=pid_cuenta;
+					select 'Se ha efectuado el cambio' as mensaje;
+				else
+				select 'La cuenta se encuntra cancelada o adeudada' as mensaje;
+				end if;
+			else
+			select 'La cuenta no existe' as mensaje;
+			END IF;
+		else
+		select 'La venta no existe' as mensaje;
+		end IF;
+
+END;
+/*************************************************************************************************************/
+delimiter $$
+create procedure MODIFICAR_V_B( in pid_venta INT,in pid_cuenta INT)
+
+BEGIN
+
+	DECLARE IDV INT;
+	DECLARE IDCU INT;
+	DECLARE ES INT;
+	DECLARE SUB FLOAT;
+	DECLARE IDCUA INT;
+
+	SET IDV=0;
+	SET IDCU=0;
+	SET ES=0;
+	SET SUB=0;
+	SET IDCUA=0;
+
+		select id_ventaB into IDV from ventasb where id_ventaB=pid_venta;
+		if IDV > 0 THEN
+			select id_cuenta into IDCU from cuentas where id_cuenta=pid_cuenta;
+			IF IDCU > 0 THEN
+				select estado into ES from cuentas where id_cuenta=IDCU;
+				if ES = 1 THEN
+					select subtotal into SUB from ventasb where id_ventaB=pid_venta;
+					select id_cuenta into IDCUA from ventasb where id_ventaB=pid_venta;
+					update cuentas set subtotal=subtotal-SUB where id_cuenta=IDCUA;
+
+					update ventasb set id_cuenta=pid_cuenta where id_ventaB=pid_venta;
+					update cuentas set subtotal=subtotal+SUB where id_cuenta=pid_cuenta;
+					select 'Se ha efectuado el cambio' as mensaje;
+				else
+				select 'La cuenta se encuntra cancelada o adeudada' as mensaje;
+				end if;
+			else
+			select 'La cuenta no existe' as mensaje;
+			END IF;
+		else
+		select 'La venta no existe' as mensaje;
+		end IF;
+
+END;
+/*************************************************************************************************************/
+delimiter $$
+create procedure RESERVA_C( in pid_locacion int)
+
+BEGIN
+	DECLARE IDL INT;
+	DECLARE EL INT;
+	DECLARE IDT INT;
+	DECLARE INS INT;
+	DECLARE ESI INT;
+
+	SET IDL=0;
+	SET EL=0;
+	SET IDT=0;
+	SET INS=0;
+	SET ESI=0;
+
+			select max(id_sesion) into INS from t_sesiones;
+			select	estado_i into ESI from t_sesiones where estado_c=2 and id_sesion=INS;
+			if ESI = 1 THEN
+
+				select id_locacion into IDL from locaciones where id_locacion=pid_locacion;
+				if IDL > 0 THEN
+
+					select estado into EL from locaciones where id_locacion=pid_locacion;
+					if EL = 1 then
+
+						insert into tickets values (null,0,0,now(),0,1,0);
+						select MAX(id_ticket) into IDT from tickets;
+						update locaciones set id_ticket=IDT,estado=2 where id_locacion=pid_locacion;
+						insert into cuentas values(null,1,pid_locacion,IDT,1,0,0,0,0,now());
+						select 'Reservacion Exitosa' as mensaje;
+
+					else
+					select 'La locacion se encuentra ocupada' as mensaje;
+					end if;
+
+				else
+				select 'La locacion no existe' as mensaje;
+				end if;
+
+			else
+			select 'El corte se ha hecho porfavor cierra e inicia sesion de nuevo' as mensaje;
+			end if;
+
+END;
+/*************************************************************************************************************/
+/*************************************************************************************************************/
+delimiter $$
+create procedure ADD_C( in pid_locacion int)
+
+BEGIN
+	DECLARE IDL INT;
+	DECLARE EL INT;
+	DECLARE IDT INT;
+	DECLARE CUENTA INT;
+
+	SET IDL=0;
+	SET EL=0;
+	SET IDT=0;
+	SET CUENTA=0;
+
+			select id_locacion into IDL from locaciones where id_locacion=pid_locacion;
+			if IDL > 0 THEN
+				select estado into EL from locaciones where id_locacion=pid_locacion;
+				if EL = 2 then
+
+					select locaciones.id_ticket into IDT from locaciones where id_locacion=pid_locacion;
+					select MAX(descripcion) into CUENTA from cuentas where id_locacion=pid_locacion and estado=1;
+					if CUENTA=null then
+						select 'El proceso de pago de la locacion ha empezado' as mensaje;
+					else
+						SET CUENTA=CUENTA+1;
+						insert into cuentas values(null,CUENTA,pid_locacion,IDT,1,0,0,0,0,now());
+						select 'Cuenta añadida' as mensaje;
+					end if;
+
+				else
+				select 'La locacion no se encuentra ocupada' as mensaje;
+				end if;
+			else
+			select 'La locacion no existe' as mensaje;
+			end if;
+END;
+/*************************************************************************************************************/
+/*************************************************************************************************************/
+delimiter $$
+create procedure CLEAR_L( in pid_locacion int)
+
+BEGIN
+	DECLARE IDL INT;
+	DECLARE EL INT;
+	DECLARE IDT INT;
+	DECLARE CUENTA INT;
+	DECLARE SUB FLOAT;
+	DECLARE CC INT;
+
+	SET IDL=0;
+	SET EL=0;
+	SET IDT=0;
+	SET CUENTA=0;
+	SET SUB=0;
+	SET CC=0;
+
+			select id_locacion into IDL from locaciones where id_locacion=pid_locacion;
+			if IDL > 0 THEN
+				select estado into EL from locaciones where id_locacion=pid_locacion;
+				if EL = 2 then
+
+					select id_ticket into IDT from locaciones where id_locacion=pid_locacion;
+					if IDT > 0 THEN
+
+						select subtotal into SUB from tickets where id_ticket=IDT and estado=1;
+						if SUB=0 then
+							select count(id_cuenta) into CC from cuentas,tickets where tickets.total>0 and tickets.id_ticket=IDT and cuentas.id_ticket=tickets.id_ticket;
+							if CC > 0 then
+								update tickets set estado=0 where id_ticket=IDT;
+								update cuentas set estado=3 where id_locacion=IDL and total=0 and total_e=0 and total_c=0 and estado=1;
+								update locaciones set estado=1,id_ticket=0 where id_locacion=IDL;
+								select 'La locacion a sido liberada' as mensaje;
+							else
+								update tickets set estado=3 where id_ticket=IDT;
+								update cuentas set estado=3 where id_locacion=IDL;
+								update locaciones set estado=1,id_ticket=0 where id_locacion=IDL;
+								select 'La locacion a sido liberada' as mensaje;
+							end if;
+						else
+						select 'La locacion se encuentra adeudada' as mensaje;
+						end if;
+					else
+					select 'El ticket no existe' as mensaje;
+					end if;
+
+				else
+				select 'La locacion no se encuentra ocupada' as mensaje;
+				end if;
+			else
+			select 'La locacion no existe' as mensaje;
+			end if;
+END;
+/*************************************************************************************************************/
+delimiter $$
+create procedure AGREGAR_V( in pcant int,in pid_alimento int,in pid_locacion int,in pid_usuario int, in pid_cuenta int)
+
+BEGIN
+
+	DECLARE IDA INT;
+	DECLARE IDL INT;
+	DECLARE ES INT;
+	DECLARE EL INT;
+	DECLARE EA INT;
+	DECLARE RES INT;
+	DECLARE ESI INT;
+	DECLARE INS INT;
+	DECLARE IDT INT;
+	DECLARE IDV INT;
+	DECLARE CAN2 INT;
+	DECLARE ET INT;
+	DECLARE TA INT;
+	DECLARE IDI INT;
+	DECLARE IDE INT;
+	DECLARE IDC INT;
+
+	DECLARE P FLOAT;
+	DECLARE SUB FLOAT;
+	DECLARE SUBN FLOAT;
+	DECLARE CANA FLOAT;
+	DECLARE CANT FLOAT;
+	DECLARE TOTI FLOAT;
+
+
+
+	SET IDA=0;
+	SET IDL=0;
+	SET ES=0;
+	SET EL=0;
+	SET EA=0;
+	SET RES=0;
+	SET ESI=0;
+	SET INS=0;
+	SET IDT=0;
+	SET IDV=0;
+	SET CAN2=0;
+	SET ET=0;
+	SET TA=0;
+	SET IDI=0;
+	SET IDE=0;
+	SET IDC=0;
+
+	SET SUB=0;
+	SET SUBN=0;
+	SET P=0;
+	SET CANA=0;
+	SET CANT=0;
+	SET TOTI=0;
+
+	select id_cuenta into IDC from cuentas where id_cuenta=pid_cuenta;
+
+	if IDC > 0 then
+		select max(id_sesion) into INS from t_sesiones;
+		select	estado_i into ESI from t_sesiones where estado_c=2 and id_sesion=INS;
+			if ESI=1 THEN
+
+			select estado into EL from locaciones where id_locacion=pid_locacion;
+				if EL = 2 THEN
+
+				select id_locacion into IDL from locaciones where id_locacion=pid_locacion;
+					if IDL> 0 then
+
+						select locaciones.id_ticket into IDT from locaciones,tickets where locaciones.id_ticket=tickets.id_ticket and tickets.estado=1 and locaciones.estado=2 and id_locacion=IDL;
+						if IDT > 0 then
+
+							select estado into ET from tickets where id_ticket=IDT;
+							if ET=1 then
+
+								select id_alimento into IDA from alimentos where id_alimento=pid_alimento;
+									if IDA >0 then
+
+									select estado into EA from alimentos where pid_alimento=id_alimento;
+										if EA=1 THEN
+											select id_venta into IDV from ventas,locaciones,tickets,cuentas where ventas.id_cuenta=cuentas.id_cuenta and locaciones.id_ticket=tickets.id_ticket and cuentas.id_locacion=locaciones.id_locacion and cuentas.id_ticket=tickets.id_ticket and ventas.estado=1 and locaciones.estado=2 and tickets.estado=1 and cuentas.estado=1 and ventas.id_alimento=IDA and ventas.id_cuenta=pid_cuenta;
+												if IDV > 0 then
+													select id_tipo_de_a into TA from alimentos where id_alimento=IDA;
+														if TA=1 then
+															select cantidad into CAN2 from ventas where id_venta=IDV;
+															SET CAN2=CAN2+pcant;
+														    select precio into P from alimentos where id_alimento=pid_alimento;
+														    SET SUB=CAN2*P;
+														    SET SUBN=pcant*P;
+														    update tickets set subtotal=subtotal+SUBN where id_ticket=IDT;
+														   	update cuentas set subtotal=subtotal+SUBN where id_cuenta=pid_cuenta;
+														    update ventas set cantidad=CAN2,subtotal=SUB where id_venta=IDV;
+														    select 'La venta ha sido exitosa' as mensaje;
+														else
+
+															if TA=2 then
+																select id_ingrediente into IDI from alimentos where id_alimento=IDA;
+																if IDI>0 then
+																	select cantidad_p into CANA from alimentos where id_alimento=IDA;
+																	select cantidad into TOTI from ingredientes where id_ingrediente=IDI;
+																	SET CANT=pcant*CANA;
+																	SET CANT=TOTI-CANT;
+																	if CANT>=0 then
+																		update ingredientes set cantidad=CANT where id_ingrediente=IDI;
+																		select cantidad into CAN2 from ventas where id_venta=IDV;
+																		SET CAN2=CAN2+pcant;
+																		select precio into P from alimentos where id_alimento=pid_alimento;
+																		SET SUB=CAN2*P;
+																		SET SUBN=pcant*P;
+																		update tickets set subtotal=subtotal+SUBN where id_ticket=IDT;
+																		update cuentas set subtotal=subtotal+SUBN where id_cuenta=pid_cuenta;
+																		update ventas set cantidad=CAN2,subtotal=SUB where id_venta=IDV;
+																		select 'La venta ha sido exitosa' as mensaje;
+																	else
+																		select 'La existencia es insuficiente para realizar la venta' as mensaje;
+																	end if;
+																else
+																	select 'El ingrediente no existe' as mensaje;
+																end if;
+															else
+															select 'Error en tipo de alimento' as mensaje;
+															end if;
+														end if;
+												else
+													select id_tipo_de_a into TA from alimentos where id_alimento=IDA;
+														if TA=1 then
+															select precio into P from alimentos where id_alimento=pid_alimento;
+															SET SUB=P*pcant;
+															update tickets set subtotal=subtotal+SUB where id_ticket=IDT;
+															update cuentas set subtotal=subtotal+SUB where id_cuenta=pid_cuenta;
+															insert into ventas values(null,pcant,pid_alimento,SUB,pid_cuenta,1,pid_usuario,1);
+															select 'La venta ha sido exitosa' as mensaje;
+														else
+
+															if TA=2 then
+																select id_ingrediente into IDI from alimentos where id_alimento=IDA;
+																if IDI>0 then
+																	select cantidad_p into CANA from alimentos where id_alimento=IDA;
+																	select cantidad into TOTI from ingredientes where id_ingrediente=IDI;
+																	SET CANT=pcant*CANA;
+																	SET CANT=TOTI-CANT;
+																	if CANT>=0 then
+																		update ingredientes set cantidad=CANT where id_ingrediente=IDI;
+																		select precio into P from alimentos where id_alimento=pid_alimento;
+																		SET SUB=P*pcant;
+																		update tickets set subtotal=subtotal+SUB where id_ticket=IDT;
+																		update cuentas set subtotal=subtotal+SUB where id_cuenta=pid_cuenta;
+																		insert into ventas values(null,pcant,pid_alimento,SUB,pid_cuenta,1,pid_usuario,1);
+																		select 'La venta ha sido exitosa' as mensaje;
+																	else
+																		select 'La existencia es insuficiente para realizar la venta' as mensaje;
+																	end if;
+
+																else
+																	select 'El ingrediente no existe' as mensaje;
+																end if;
+															else
+															select 'Error en tipo de alimento' as mensaje;
+															end if;
+														end if;
+												end if;
+
+										else
+										select 'El alimento está dado de baja' as mensaje;
+										end if;
+
+									else
+									select 'El alimento no existe en el catálogo' as mensaje;
+									end if;
+
+								else
+								select 'El ticket no existe' as mensaje;
+								end if;
+
+							else
+							select 'El ticket no se encuentra activo para ventas' as mensaje;
+							end if;
+
+					else
+					select 'La locacion no existe' as mensaje;
+					end if;
+
+				else
+				select 'El estado de la locacion no es ocupado' as mensaje;
+				end if;
+
+			else
+			select 'El corte se ha hecho porfavor cierra e inicia sesion de nuevo' as mensaje;
+			end if;
+	else
+	select 'Hay un error en la cuenta' as mensaje;
+	end if;
+
+
+END;
+/*************************************************************************************************************/
+delimiter $$
+create procedure CAN_V(in pid_venta int, in pid_alimento int , in pid_cuenta int, in pcantidad int)
+
+BEGIN
+
+	DECLARE IDV INT;
+	DECLARE IDA INT;
+	DECLARE IDL INT;
+	DECLARE IDT INT;
+	DECLARE CAN INT;
+	DECLARE CANCT INT;
+	DECLARE ET INT;
+	DECLARE ITA INT;
+	DECLARE IDI INT;
+
+	DECLARE PREA FLOAT;
+	DECLARE SUBN FLOAT;
+	DECLARE SUBCT FLOAT;
+	DECLARE SUBCOMPRO FLOAT;
+	DECLARE C FLOAT;
+
+	SET IDV=0;
+	SET IDA=0;
+	SET IDL=0;
+	SET IDT=0;
+	SET CAN=0;
+	SET CANCT=0;
+	SET ET=0;
+	SET ITA=0;
+	SET IDI=0;
+
+
+	SET PREA=0;
+	SET SUBN=0;
+	SET SUBCT=0;
+	SET SUBCOMPRO=0;
+	SET C=0;
+
+				select id_venta into IDV from ventas where id_venta=pid_venta;
+				if IDV > 0 then
+
+					select ventas.id_alimento into IDA from ventas,alimentos where ventas.id_alimento=alimentos.id_alimento  and ventas.id_alimento=pid_alimento group by id_alimento;
+					if IDA > 0 then
+
+						select id_locacion into IDL from cuentas where id_cuenta=pid_cuenta;
+						if IDL > 0 then
+
+							select locaciones.id_ticket into IDT from locaciones,tickets where locaciones.id_ticket=tickets.id_ticket and tickets.estado=1 and locaciones.estado=2 and id_locacion=IDL;
+							if IDT > 0 then
+
+								select estado into ET from tickets where id_ticket=IDT;
+								if ET=1 then
+
+									select cantidad into CAN from ventas where id_venta=IDV;
+									if pcantidad > CAN then
+										select 'No se puede cancelar mas de la cantidad vendida' as mensaje;
+									else
+										select id_tipo_de_a into ITA from alimentos where id_alimento=pid_alimento;
+										if ITA=2 then
+											if CAN = pcantidad then
+												select id_ingrediente into IDI from alimentos where id_alimento=IDA;
+												select subtotal into SUBCT from ventas where id_venta=IDV;
+												select cantidad into CANCT from ventas where id_venta=IDV;
+												select cantidad_p into C from alimentos where id_alimento=IDA;
+
+												set C=C*CANCT;
+												update ingredientes set cantidad=cantidad+C where id_ingrediente=IDI;
+												update ventas set cantidad=cantidad-CANCT,subtotal=subtotal-SUBCT,estado=2 where id_venta=IDV;
+
+												update tickets set subtotal=subtotal-SUBCT where id_ticket=IDT;
+												update cuentas set subtotal=subtotal-SUBCT where id_cuenta=pid_cuenta;
+												select 'La venta a sido cancelada' as mensaje;
+												select	subtotal into SUBCOMPRO from tickets where id_ticket=IDT;
+												if SUBCOMPRO = 0 then
+													update tickets set estado=3 where id_ticket=IDT;
+													update cuentas set estado=3 where id_ticket=IDT;
+													update locaciones set estado=1,id_ticket=0 where id_locacion=IDL;
+													select 'Locacion liberada' as mensaje;
+												end if;
+											else
+												select id_ingrediente into IDI from alimentos where id_alimento=IDA;
+												select cantidad_p into C from alimentos where id_alimento=IDA;
+												select precio into PREA from alimentos where id_alimento=IDA;
+												SET SUBN=pcantidad*PREA;
+												SET C=C*pcantidad;
+
+												update ingredientes set cantidad=cantidad+C where id_ingrediente=IDI;
+
+												update ventas set subtotal=subtotal-SUBN,cantidad=cantidad-pcantidad where id_venta=IDV;
+												update cuentas set subtotal=subtotal-SUBN where id_cuenta=pid_cuenta;
+												update tickets set subtotal=subtotal-SUBN where id_ticket=IDT;
+												select 'Productos cancelados' as mensaje;
+											end if;
+										else
+											if ITA=1 then
+												if CAN = pcantidad then
+													select subtotal into SUBCT from ventas where id_venta=IDV;
+													select cantidad into CANCT from ventas where id_venta=IDV;
+
+													update ventas set cantidad=cantidad-CANCT,subtotal=subtotal-SUBCT,estado=2 where id_venta=IDV;
+
+													update tickets set subtotal=subtotal-SUBCT where id_ticket=IDT;
+													update cuentas set subtotal=subtotal-SUBCT where id_cuenta=pid_cuenta;
+													select 'La venta a sido cancelada' as mensaje;
+													select	subtotal into SUBCOMPRO from tickets where id_ticket=IDT;
+													if SUBCOMPRO = 0 then
+														update tickets set estado=3 where id_ticket=IDT;
+														update cuentas set estado=3 where id_ticket=IDT;
+														update locaciones set estado=1,id_ticket=0 where id_locacion=IDL;
+														select 'Locacion liberada' as mensaje;
+													end if;
+												else
+													select precio into PREA from alimentos where id_alimento=IDA;
+													SET SUBN=pcantidad*PREA;
+
+													update ventas set cantidad=cantidad-pcantidad,subtotal=subtotal-SUBN where id_venta=IDV;
+
+													update cuentas set subtotal=subtotal-SUBN where id_cuenta=pid_cuenta;
+													update tickets set subtotal=subtotal-SUBN where id_ticket=IDT;
+													select 'Productos cancelados' as mensaje;
+												end if;
+											else
+											select 'Error de cancelacion' as mensaje;
+											end if;
+										end if;
+									end if;
+
+								else
+								select 'El ticket  se encuentra adeudado no se puede realizar algun otro cambio' as mensaje;
+								end if;
+
+							else
+							select 'No cuenta con algun ticket activo o se encuentra en estado de adedudo' as mensaje;
+							end if;
+
+						else
+						select 'La locacion no existe' as mensaje;
+						end if;
+
+					else
+					select 'El alimento no existe' as mensaje;
+					end if;
+
+				else
+				select 'La venta no existe' as mensaje;
+				end if;
+
+END;
+/*************************************************************************************************************/
+delimiter $$
+create procedure AGREGAR_B( in pcant float,in pid_bebida int,in pid_locacion int, in pid_ingrediente_s int,in pcantidad_s float,in pid_ingrediente_ss int,in pcantidad_ss float,in pid_usuario int, in pid_cuenta int)
+
+BEGIN
+
+	DECLARE IDB INT;
+	DECLARE IDL INT;
+	DECLARE IDI INT;
+	DECLARE ES INT;
+	DECLARE EL INT;
+	DECLARE EB INT;
+	DECLARE EI INT;
+	DECLARE RES INT;
+	DECLARE ESI INT;
+	DECLARE INS INT;
+	DECLARE IDT INT;
+	DECLARE IDVB INT;
+	DECLARE CAN2 INT;
+	DECLARE ET INT;
+	DECLARE TB INT;
+	DECLARE IDE INT;
+	DECLARE IDC INT;
+
+	DECLARE P FLOAT;
+	DECLARE SUB FLOAT;
+	DECLARE SUBN FLOAT;
+	DECLARE CANB FLOAT;
+	DECLARE CANT FLOAT;
+	DECLARE CANS FLOAT;
+	DECLARE CANSS FLOAT;
+	DECLARE CANTS FLOAT;
+	DECLARE CANTSS FLOAT;
+	DECLARE TOTI FLOAT;
+
+
+
+	SET IDB=0;
+	SET IDL=0;
+	SET IDI=0;
+	SET ES=0;
+	SET EL=0;
+	SET EB=0;
+	SET EI=0;
+	SET RES=0;
+	SET ESI=0;
+	SET INS=0;
+	SET IDT=0;
+	SET IDVB=0;
+	SET CAN2=0;
+	SET ET=0;
+	SET TB=0;
+	SET IDE=0;
+
+	SET SUB=0;
+	SET SUBN=0;
+	SET P=0;
+	SET CANB=0;
+	SET CANT=0;
+	SET CANS=0;
+	SET CANSS=0;
+	SET CANTS=0;
+	SET CANTSS=0;
+	SET TOTI=0;
+	SET IDC=0;
+
+	select id_cuenta into IDC from cuentas where id_cuenta=pid_cuenta;
+	if IDC>0 then
+		select max(id_sesion) into INS from t_sesiones;
+		select	estado_i into ESI from t_sesiones where estado_c=2 and id_sesion=INS;
+			if ESI=1 THEN
+
+			select estado into EL from locaciones where id_locacion=pid_locacion;
+				if EL = 2 THEN
+
+				select id_locacion into IDL from locaciones where id_locacion=pid_locacion;
+					if IDL> 0 then
+
+						select locaciones.id_ticket into IDT from locaciones,tickets where locaciones.id_ticket=tickets.id_ticket and tickets.estado=1 and locaciones.estado=2 and id_locacion=IDL;
+						if IDT > 0 then
+
+							select estado into ET from tickets where id_ticket=IDT;
+							if ET=1 then
+
+								select id_bebida into IDB from bebidas where id_bebida=pid_bebida;
+									if IDB >0 then
+
+									select estado into EB from bebidas where id_bebida=IDB;
+										if EB=1 THEN
+
+											select id_ingrediente into IDI from ingredientes where id_ingrediente=pid_ingrediente_s;
+											if IDI > 0 then
+
+												select estado into EI from ingredientes where id_ingrediente=IDI;
+												if EI=1 then
+
+													select id_ventaB into IDVB from ventasB,locaciones,tickets,cuentas where ventasB.id_cuenta=cuentas.id_cuenta and locaciones.id_ticket=tickets.id_ticket and cuentas.id_locacion=locaciones.id_locacion and cuentas.id_ticket=tickets.id_ticket and ventasB.estado=1 and locaciones.estado=2 and tickets.estado=1 and cuentas.estado=1 and ventasB.id_bebida=IDB and ventasB.id_cuenta=pid_cuenta;
+													if IDVB > 0 then
+														select id_tipo_de_a into TB from bebidas where id_bebida=IDB;
+															if TB=1 then
+																select cantidad into CAN2 from ventasB where id_ventaB=IDVB;
+																SET CAN2=CAN2+pcant;
+															    select precio into P from bebidas where id_bebida=pid_bebida;
+															    SET SUB=CAN2*P;
+															    SET SUBN=pcant*P;
+															    update tickets set subtotal=subtotal+SUBN where id_ticket=IDT;
+															   	update cuentas set subtotal=subtotal+SUBN where id_cuenta=pid_cuenta;
+															    update ventasB set cantidad=CAN2,subtotal=SUB where id_ventaB=IDVB;
+															    select 'La venta ha sido exitosa' as mensaje;
+															else
+
+																if TB=2 then
+																	select id_ingrediente into IDI from bebidas where id_bebida=IDB;
+																	if IDI>0 then
+																		if pid_ingrediente_s=pid_ingrediente_ss then
+
+																			select cantidad_p into CANB from bebidas where id_bebida=IDB;
+																			select cantidad into TOTI from ingredientes where id_ingrediente=IDI;
+																			select cantidad into CANS from ingredientes where id_ingrediente=pid_ingrediente_s;
+
+																			SET CANTS=pcant*pcantidad_s;
+																			SET CANTSS=pcant*pcantidad_ss;
+																			SET CANTS=CANTS+CANTSS;
+																			SET CANT=pcant*CANB;
+																			SET CANT=TOTI-CANT;
+																			SET CANTS=CANS-CANTS;
+
+																			if CANT>=0 then
+																				if CANTS>=0 then
+
+																						update ingredientes set cantidad=CANT where id_ingrediente=IDI;
+																						update ingredientes set cantidad=CANTS where id_ingrediente=pid_ingrediente_s;
+																						select cantidad into CAN2 from ventasB where id_ventaB=IDVB;
+																						SET CAN2=CAN2+pcant;
+																						select precio into P from bebidas where id_bebida=IDB;
+																						SET SUB=CAN2*P;
+																						SET SUBN=pcant*P;
+																						update tickets set subtotal=subtotal+SUBN where id_ticket=IDT;
+																						update cuentas set subtotal=subtotal+SUBN where id_cuenta=pid_cuenta;
+																						update ventasB set cantidad=CAN2,subtotal=SUB where id_ventaB=IDVB;
+																						select 'La venta ha sido exitosa' as mensaje;
+
+																				else
+																					select 'La existencia del ingrediente secundario es insuficiente para realizar la venta' as mensaje;
+																				end if;
+																			else
+																				select 'La existencia es insuficiente para realizar la venta' as mensaje;
+																			end if;
+																		else
+																			select cantidad_p into CANB from bebidas where id_bebida=IDB;
+																			select cantidad into TOTI from ingredientes where id_ingrediente=IDI;
+																			select cantidad into CANS from ingredientes where id_ingrediente=pid_ingrediente_s;
+																			select cantidad into CANSS from ingredientes where id_ingrediente=pid_ingrediente_ss;
+																			SET CANTS=pcant*pcantidad_s;
+																			SET CANTSS=pcant*pcantidad_ss;
+																			SET CANT=pcant*CANB;
+																			SET CANT=TOTI-CANT;
+																			SET CANTS=CANS-CANTS;
+																			SET CANTSS=CANSS-CANTSS;
+																			if CANT>=0 then
+																				if CANTS>=0 then
+																					if CANTSS>=0 then
+																						update ingredientes set cantidad=CANT where id_ingrediente=IDI;
+																						update ingredientes set cantidad=CANTS where id_ingrediente=pid_ingrediente_s;
+																						update ingredientes set cantidad=CANTSS where id_ingrediente=pid_ingrediente_ss;
+																						select cantidad into CAN2 from ventasB where id_ventaB=IDVB;
+																						SET CAN2=CAN2+pcant;
+																						select precio into P from bebidas where id_bebida=IDB;
+																						SET SUB=CAN2*P;
+																						SET SUBN=pcant*P;
+																						update tickets set subtotal=subtotal+SUBN where id_ticket=IDT;
+																						update cuentas set subtotal=subtotal+SUBN where id_cuenta=pid_cuenta;
+																						update ventasB set cantidad=CAN2,subtotal=SUB where id_ventaB=IDVB;
+																						select 'La venta ha sido exitosa' as mensaje;
+																					else
+																						select 'La existencia del ingrediente secundario es insuficiente para realizar la venta' as mensaje;
+																					end if;
+																				else
+																					select 'La existencia del ingrediente secundario es insuficiente para realizar la venta' as mensaje;
+																				end if;
+																			else
+																				select 'La existencia es insuficiente para realizar la venta' as mensaje;
+																			end if;
+																		end if;
+																	else
+																		select 'El ingrediente no existe' as mensaje;
+																	end if;
+																else
+																select 'Error en tipo de alimento' as mensaje;
+																end if;
+															end if;
+													else
+														select id_tipo_de_a into TB from bebidas where id_bebida=IDB;
+															if TB=1 then
+																select precio into P from bebidas where id_bebida=pid_bebida;
+																SET SUB=P*pcant;
+																update tickets set subtotal=subtotal+SUB where id_ticket=IDT;
+																update cuentas set subtotal=subtotal+SUB where id_cuenta=pid_cuenta;
+																insert into ventasB values(null,pcant,pid_bebida,SUB,pid_cuenta,1,pid_usuario,3,pid_ingrediente_s,pcantidad_s,pid_ingrediente_ss,pcantidad_ss);
+																select 'La venta ha sido exitosa' as mensaje;
+															else
+
+																if TB=2 then
+																	select id_ingrediente into IDI from bebidas where id_bebida=IDB;
+																	if IDI>0 then
+																		if pid_ingrediente_s=pid_ingrediente_ss then
+																			select cantidad_p into CANB from bebidas where id_bebida=IDB;
+																			select cantidad into TOTI from ingredientes where id_ingrediente=IDI;
+																			select cantidad into CANS from ingredientes where id_ingrediente=pid_ingrediente_s;
+
+																			SET CANTS=pcant*pcantidad_s;
+																			SET CANTSS=pcant*pcantidad_ss;
+																			SET CANTS=CANTS+CANTSS;
+																			SET CANT=pcant*CANB;
+																			SET CANT=TOTI-CANT;
+																			SET CANTS=CANS-CANTS;
+
+																			if CANT>=0 then
+																				if CANTS>=0 then
+
+																						update ingredientes set cantidad=CANT where id_ingrediente=IDI;
+																						update ingredientes set cantidad=CANTS where id_ingrediente=pid_ingrediente_s;
+																						select precio into P from bebidas where id_bebida=IDB;
+																						SET SUB=P*pcant;
+																						update tickets set subtotal=subtotal+SUB where id_ticket=IDT;
+																						update cuentas set subtotal=subtotal+SUB where id_cuenta=pid_cuenta;
+																						insert into ventasB values(null,pcant,pid_bebida,SUB,pid_cuenta,1,pid_usuario,3,pid_ingrediente_s,pcantidad_s,pid_ingrediente_ss,pcantidad_ss);
+																						select 'La venta ha sido exitosa' as mensaje;
+
+																				else
+																					select 'La existencia del ingrediente secundario es insuficiente para realizar la venta' as mensaje;
+																				end if;
+																			else
+																				select 'La existencia es insuficiente para realizar la venta' as mensaje;
+																			end if;
+																		else
+																			select cantidad_p into CANB from bebidas where id_bebida=IDB;
+																			select cantidad into TOTI from ingredientes where id_ingrediente=IDI;
+																			select cantidad into CANS from ingredientes where id_ingrediente=pid_ingrediente_s;
+																			select cantidad into CANSS from ingredientes where id_ingrediente=pid_ingrediente_ss;
+																			SET CANTS=pcant*pcantidad_s;
+																			SET CANTSS=pcant*pcantidad_ss;
+																			SET CANT=pcant*CANB;
+																			SET CANT=TOTI-CANT;
+																			SET CANTS=CANS-CANTS;
+																			SET CANTSS=CANSS-CANTSS;
+																			if CANT>=0 then
+																				if CANTS>=0 then
+																					if CANTSS>=0 then
+																						update ingredientes set cantidad=CANT where id_ingrediente=IDI;
+																						update ingredientes set cantidad=CANTS where id_ingrediente=pid_ingrediente_s;
+																						update ingredientes set cantidad=CANTSS where id_ingrediente=pid_ingrediente_ss;
+																						select precio into P from bebidas where id_bebida=IDB;
+																						SET SUB=P*pcant;
+																						update tickets set subtotal=subtotal+SUB where id_ticket=IDT;
+																						update cuentas set subtotal=subtotal+SUB where id_cuenta=pid_cuenta;
+																						insert into ventasB values(null,pcant,pid_bebida,SUB,pid_cuenta,1,pid_usuario,3,pid_ingrediente_s,pcantidad_s,pid_ingrediente_ss,pcantidad_ss);
+																						select 'La venta ha sido exitosa' as mensaje;
+																					else
+																						select 'La existencia del ingrediente secundario es insuficiente para realizar la venta' as mensaje;
+																					end if;
+																				else
+																					select 'La existencia del ingrediente secundario es insuficiente para realizar la venta' as mensaje;
+																				end if;
+																			else
+																				select 'La existencia es insuficiente para realizar la venta' as mensaje;
+																			end if;
+																		end if;
+
+																	else
+																		select 'El ingrediente no existe' as mensaje;
+																	end if;
+																else
+																select 'Error en tipo de alimento' as mensaje;
+																end if;
+															end if;
+													end if;
+
+												else
+												select 'El ingrediente no se encuentra activo' as mensaje;
+												end if;
+
+											else
+											select 'El ingrediente no existe' as mensaje;
+											end if;
+
+										else
+										select 'El alimento está dado de baja' as mensaje;
+										end if;
+
+									else
+									select 'El alimento no existe en el catálogo' as mensaje;
+									end if;
+
+								else
+								select 'El ticket no existe' as mensaje;
+								end if;
+
+							else
+							select 'El ticket no se encuentra activo para ventas' as mensaje;
+							end if;
+
+					else
+					select 'La locacion no existe' as mensaje;
+					end if;
+
+				else
+				select 'El estado de la locacion no es ocupado' as mensaje;
+				end if;
+
+			else
+			select 'El corte se ha hecho porfavor cierra e inicia sesion de nuevo' as mensaje;
+			end if;
+	else
+	select 'La cuenta tiene un error' as mensaje;
+	end if;
+
+
+END;
+/**************************************************************************************************************/
+delimiter $$
+create procedure CAN_B(in pid_ventaB int, in pid_bebida int , in pid_cuenta int, in pcantidad int)
+
+BEGIN
+
+	DECLARE IDVB INT;
+	DECLARE IDB INT;
+	DECLARE IDL INT;
+	DECLARE IDT INT;
+	DECLARE CAN INT;
+	DECLARE CANCT INT;
+	DECLARE ET INT;
+	DECLARE ITA INT;
+	DECLARE IDI INT;
+	DECLARE IDIS INT;
+	DECLARE IDISS INT;
+
+	DECLARE PREA FLOAT;
+	DECLARE SUBN FLOAT;
+	DECLARE SUBCT FLOAT;
+	DECLARE SUBCOMPRO FLOAT;
+	DECLARE C FLOAT;
+	DECLARE CS FLOAT;
+	DECLARE CSS FLOAT;
+
+	SET IDVB=0;
+	SET IDB=0;
+	SET IDL=0;
+	SET IDT=0;
+	SET CAN=0;
+	SET CANCT=0;
+	SET ET=0;
+	SET ITA=0;
+	SET IDI=0;
+	SET IDIS=0;
+	SET IDISS=0;
+
+
+	SET PREA=0;
+	SET SUBN=0;
+	SET SUBCT=0;
+	SET SUBCOMPRO=0;
+	SET C=0;
+	SET CS=0;
+	SET CSS=0;
+
+				select id_ventaB into IDVB from ventasB where id_ventaB=pid_ventaB;
+				if IDVB > 0 then
+
+					select ventasB.id_bebida into IDB from ventasB,bebidas where ventasB.id_bebida=bebidas.id_bebida and ventasB.id_bebida=pid_bebida group by id_bebida;
+					if IDB > 0 then
+
+						select id_locacion into IDL from cuentas where id_cuenta=pid_cuenta;
+						if IDL > 0 then
+
+							select locaciones.id_ticket into IDT from locaciones,tickets where locaciones.id_ticket=tickets.id_ticket and tickets.estado=1 and locaciones.estado=2 and id_locacion=IDL;
+							if IDT > 0 then
+
+								select estado into ET from tickets where id_ticket=IDT;
+								if ET=1 then
+
+									select cantidad into CAN from ventasB where id_ventaB=IDVB;
+									if pcantidad > CAN then
+										select 'No se puede cancelar mas de la cantidad vendida' as mensaje;
+									else
+										select id_tipo_de_a into ITA from bebidas where id_bebida=pid_bebida;
+										if ITA=2 then
+											if CAN = pcantidad then
+												select id_ingrediente into IDI from bebidas where id_bebida=IDB;
+												select id_ingrediente_s into IDIS from ventasB where id_ventaB=IDVB;
+												select id_ingrediente_ss into IDISS from ventasB where id_ventaB=IDVB;
+												select subtotal into SUBCT from ventasB where id_ventaB=IDVB;
+												select cantidad into CANCT from ventasB where id_ventaB=IDVB;
+												select cantidad_p into C from bebidas where id_bebida=IDB;
+												select cantidad_s into CS from ventasB where id_ventaB=IDVB;
+												select cantidad_ss into CSS from ventasB where id_ventaB=IDVB;
+
+												set C=C*CANCT;
+												set CS=CS*CANCT;
+												SET CSS=CSS*CANCT;
+												update ingredientes set cantidad=cantidad+C where id_ingrediente=IDI;
+												update ingredientes set cantidad=cantidad+CS where id_ingrediente=IDIS;
+												update ingredientes set cantidad=cantidad+CSS where id_ingrediente=IDISS;
+												update ventasB set cantidad=cantidad-CANCT,subtotal=subtotal-SUBCT,estado=2 where id_ventaB=IDVB;
+
+												update tickets set subtotal=subtotal-SUBCT where id_ticket=IDT;
+												update cuentas set subtotal=subtotal-SUBCT where id_cuenta=pid_cuenta;
+												select 'La venta a sido cancelada' as mensaje;
+												select	subtotal into SUBCOMPRO from tickets where id_ticket=IDT;
+												if SUBCOMPRO = 0 then
+													update tickets set estado=3 where id_ticket=IDT;
+													update cuentas set estado=3 where id_ticket=IDT;
+													update locaciones set estado=1,id_ticket=0 where id_locacion=IDL;
+													select 'Locacion liberada' as mensaje;
+												end if;
+											else
+												select id_ingrediente into IDI from bebidas where id_bebida=IDB;
+												select id_ingrediente_s into IDIS from ventasB where id_ventaB=IDVB;
+												select id_ingrediente_ss into IDISS from ventasB where id_ventaB=IDVB;
+												select cantidad_p into C from bebidas where id_bebida=IDB;
+												select cantidad_s into CS from ventasB where id_ventaB=IDVB;
+												select cantidad_ss into CSS from ventasB where id_ventaB=IDVB;
+												select precio into PREA from bebidas where id_bebida=IDB;
+												SET SUBN=pcantidad*PREA;
+												SET C=C*pcantidad;
+												SET CS=CS*pcantidad;
+												SET CSS=CSS*pcantidad;
+
+												update ingredientes set cantidad=cantidad+C where id_ingrediente=IDI;
+												update ingredientes set cantidad=cantidad+CS where id_ingrediente=IDIS;
+												update ingredientes set cantidad=cantidad+CSS where id_ingrediente=IDISS;
+
+												update ventasB set subtotal=subtotal-SUBN,cantidad=cantidad-pcantidad where id_ventaB=IDVB;
+												update cuentas set subtotal=subtotal-SUBN where id_cuenta=pid_cuenta;
+												update tickets set subtotal=subtotal-SUBN where id_ticket=IDT;
+												select 'Productos cancelados' as mensaje;
+											end if;
+										else
+											if ITA=1 then
+												if CAN = pcantidad then
+													select subtotal into SUBCT from ventasB where id_ventaB=IDVB;
+													select cantidad into CANCT from ventasB where id_ventaB=IDVB;
+
+													update ventasB set cantidad=cantidad-CANCT,subtotal=subtotal-SUBCT,estado=2 where id_ventaB=IDVB;
+
+													update tickets set subtotal=subtotal-SUBCT where id_ticket=IDT;
+													update cuentas set subtotal=subtotal-SUBCT where id_cuenta=pid_cuenta;
+													select 'La venta a sido cancelada' as mensaje;
+													select	subtotal into SUBCOMPRO from tickets where id_ticket=IDT;
+													if SUBCOMPRO = 0 then
+														update tickets set estado=3 where id_ticket=IDT;
+														update cuentas set estado=3 where id_ticket=IDT;
+														update locaciones set estado=1,id_ticket=0 where id_locacion=IDL;
+														select 'Locacion liberada' as mensaje;
+													end if;
+												else
+													select precio into PREA from bebidas where id_bebida=IDB;
+													SET SUBN=pcantidad*PREA;
+
+													update ventasB set cantidad=cantidad-pcantidad,subtotal=subtotal-SUBN where id_ventaB=IDVB;
+
+													update cuentas set subtotal=subtotal-SUBN where id_cuenta=pid_cuenta;
+													update tickets set subtotal=subtotal-SUBN where id_ticket=IDT;
+													select 'Productos cancelados' as mensaje;
+												end if;
+											else
+											select 'Error de cancelacion' as mensaje;
+											end if;
+										end if;
+									end if;
+
+								else
+								select 'El ticket  se encuentra adeudado no se puede realizar algun otro cambio' as mensaje;
+								end if;
+
+							else
+							select 'No cuenta con algun ticket activo o se encuentra en estado de adedudo' as mensaje;
+							end if;
+
+						else
+						select 'La locacion no existe' as mensaje;
+						end if;
+
+					else
+					select 'El alimento no existe' as mensaje;
+					end if;
+
+				else
+				select 'La venta no existe' as mensaje;
+				end if;
+
+END;
+/**************************************************************************************************************/
+delimiter $$
+
+create procedure AGREGAR_C( in pid_locacion INT,in pdescripcion varchar(40),in pprecio float, in pcantidad int, in pid_usuario int,in pid_cuenta int)
+
+BEGIN
+
+
+	DECLARE IDL INT;
+	DECLARE IDC INT;
+	DECLARE IDCC INT;
+	DECLARE IDT INT;
+	DECLARE EL INT;
+	DECLARE ESI INT;
+	DECLARE INS INT;
+	DECLARE CAN2 INT;
+
+	DECLARE SUB FLOAT;
+	DECLARE SUBN FLOAT;
+	DECLARE P FLOAT;
+
+
+
+	SET IDL=0;
+	SET IDC=0;
+	SET IDCC=0;
+	SET IDT=0;
+	SET EL=0;
+	SET ESI=0;
+	SET INS=0;
+	SET CAN2=0;
+
+	SET SUB=0;
+	SET SUBN=0;
+	SET P=0;
+
+		select id_cuenta into IDCC from cuentas where id_cuenta=pid_cuenta;
+		if IDCC > 0 then
+			select max(id_sesion) into INS from t_sesiones;
+		select	estado_i into ESI from t_sesiones where estado_c=2 and id_sesion=INS;
+			if ESI=1 THEN
+
+			select id_locacion into IDL from locaciones where id_locacion=pid_locacion;
+				if IDL > 0 then
+
+				select locaciones.id_ticket into IDT from locaciones,tickets where locaciones.id_ticket=tickets.id_ticket and tickets.estado=1 and locaciones.estado=2 and id_locacion=IDL;
+				if IDT > 0 then
+
+					select estado into EL from locaciones where id_locacion=IDL;
+					if EL = 2 THEN
+
+							select id_complemento into IDC from complementos,locaciones,tickets,cuentas where complementos.id_cuenta=cuentas.id_cuenta and locaciones.id_ticket=tickets.id_ticket and cuentas.id_ticket=tickets.id_ticket and cuentas.id_locacion=locaciones.id_locacion and cuentas.estado=1 and complementos.estado=1 and locaciones.estado=2 and tickets.estado=1 and complementos.descripcion=pdescripcion and complementos.id_cuenta=pid_cuenta;
+							if IDC > 0 then
+								select cantidad into CAN2 from complementos where id_complemento=IDC;
+								SET CAN2=CAN2+pcantidad;
+								select precio into P from complementos where id_complemento=IDC;
+								SET SUB=CAN2*P;
+								SET SUBN=pcantidad*P;
+								update tickets set subtotal=subtotal+SUBN where id_ticket=IDT;
+								update cuentas set subtotal=subtotal+SUBN where id_cuenta=pid_cuenta;
+								update complementos set cantidad=CAN2,subtotal=SUB where id_complemento=IDC;
+								select 'La venta ha sido exitosa' as mensaje;
+							else
+								SET SUB=pprecio*pcantidad;
+								update tickets set subtotal=subtotal+SUB where id_ticket=IDT;
+								update cuentas set subtotal=subtotal+SUB where id_cuenta=pid_cuenta;
+								insert into complementos values (null,pid_cuenta,pdescripcion,pprecio,pcantidad,SUB,1,pid_usuario,2);
+								select 'La venta ha sido exitosa' as mensaje;
+							end if;
+
+					else
+					select 'El estado de la locacion no es ocupado' as mensaje;
+					end if;
+
+				else
+				select 'El ticket no existe' as mensaje;
+				end if;
+
+			else
+			select 'La locacion no existe' as mensaje;
+			end if;
+
+		else
+		select 'El corte se ha hecho porfavor cierra e inicia sesion de nuevo' as mensaje;
+		end if;
+		else
+		select 'Hay un error con la cuenta' as mensaje;
+		end if;
+END;
+/**************************************************************************************************************/
+delimiter $$
+create procedure CAN_C(in pid_complemento int, in pid_cuenta INT,in pcantidad int,in pid_usuario int)
+
+BEGIN
+
+	DECLARE IDC INT;
+	DECLARE IDL INT;
+	DECLARE IC INT;
+	DECLARE IDT INT;
+	DECLARE EL INT;
+	DECLARE ET INT;
+	DECLARE CAN INT;
+	DECLARE ESC INT;
+
+	DECLARE SUB FLOAT;
+	DECLARE SUBCT FLOAT;
+	DECLARE SUBCOMPRO FLOAT;
+	DECLARE PREC FLOAT;
+
+	SET IDC=0;
+	SET IDL=0;
+	SET IC=0;
+	SET IDT=0;
+	SET EL=0;
+	SET ET=0;
+	SET CAN=0;
+	SET ESC=0;
+
+	SET SUB=0;
+	SET SUBCT=0;
+	SET SUBCOMPRO=0;
+	SET PREC=0;
+
+
+		select id_complemento into IDC from complementos where id_complemento=pid_complemento;
+		if IDC > 0 then
+
+			select id_locacion into IDL from cuentas where id_cuenta=pid_cuenta;
+			if IDL > 0 then
+
+				select locaciones.id_ticket into IDT from locaciones,tickets where locaciones.id_ticket=tickets.id_ticket and tickets.estado=1 and locaciones.estado=2 and id_locacion=IDL;
+				if IDT > 0 then
+
+					select estado into ET from tickets where id_ticket=IDT;
+					if ET=1 then
+
+						select estado into EL from locaciones where id_locacion=IDL;
+						if EL = 2 THEN
+
+							select estado into ESC from cuentas where id_cuenta=pid_cuenta;
+							if ESC=2 then
+							select 'La cuenta ya se encuentra en proceso de pago' as mensaje;
+							else
+								if ESC=1 then
+									select cantidad into CAN from complementos where id_complemento=IDC;
+									if 	pcantidad > CAN then
+										select 'No se puede cancelar mas de la cantidad vendida' as mensaje;
+									else
+										if CAN= pcantidad then
+											select subtotal into SUBCT from complementos where id_complemento=IDC;
+
+											update tickets set subtotal=subtotal-SUBCT where id_ticket=IDT;
+											update cuentas set subtotal=subtotal-SUBCT where id_cuenta=pid_cuenta;
+											update complementos set estado=2 where id_complemento=IDC;
+											select 'La venta ha sido cancelada' as mensaje;
+
+											select	subtotal into SUBCOMPRO from tickets where id_ticket=IDT;
+												if SUBCOMPRO = 0 then
+													update tickets set estado=3 where id_ticket=IDT;
+													update cuentas set estado=3 where id_ticket=IDT;
+													update locaciones set estado=1,id_ticket=0 where id_locacion=IDL;
+													select 'La locacion ha sido liberada' as mensaje;
+											end if;
+										else
+											select precio into PREC from complementos where id_complemento=IDC;
+											SET SUB=pcantidad*PREC;
+
+											update complementos set subtotal=subtotal-SUB,cantidad=cantidad-pcantidad where id_complemento=IDC;
+											update cuentas set subtotal=subtotal-SUB where id_cuenta=pid_cuenta;
+											update tickets set subtotal=subtotal-SUB where id_ticket=IDT;
+											select 'Productos cancelados' as mensaje;
+										end if;
+									end if;
+								else
+									select 'Error de cuenta' as mensaje;
+								end if;
+							end if;
+						else
+						select 'El estado de la locacion no es activo' as mensaje;
+						end if;
+
+					else
+					select 'El ticket  se encuentra adeudado no se puede realizar algun otro cambio' as mensaje;
+					end if;
+
+				else
+				select 'El ticket no existe' as mensaje;
+				end if;
+
+			else
+			select 'El la locacion no existe' as mensaje;
+			end if;
+
+		else
+		select 'El complemento no existe' as mensaje;
+		end if;
+
+END;
+/**************************************************************************************************************/
+delimiter $$
+create procedure PAGO_C( in pid_cuenta int,in pid_mp int,in pcantidad float,in pid_empleado int,in pid_descuento int)
+
+BEGIN
+	DECLARE IDC INT;
+	DECLARE IDMP INT;
+	DECLARE IDEM INT;
+	DECLARE IDT INT;
+	DECLARE EST INT;
+	DECLARE ESC INT;
+	DECLARE IDL INT;
+	DECLARE IDLD INT;
+	DECLARE CONT INT;
+	DECLARE CONT2 INT;
+	DECLARE CONT3 INT;
+	DECLARE CONT4 INT;
+
+	DECLARE TOT FLOAT;
+	DECLARE TOTV FLOAT;
+	DECLARE TOTC FLOAT;
+	DECLARE TOTB FLOAT;
+	DECLARE TOTA FLOAT;
+    DECLARE TOTD FLOAT;
+    DECLARE SUBS FLOAT;
+	DECLARE CAMBIO FLOAT;
+	DECLARE DEUDA FLOAT;
+	DECLARE POR FLOAT;
+	DECLARE DEUDAA FLOAT;
+	DECLARE RESIDUO FLOAT;
+	DECLARE CANTIDAD FLOAT;
+
+	SET IDC=0;
+	SET IDMP=0;
+	SET IDEM=0;
+	SET IDT=0;
+	SET EST=0;
+	SET ESC=0;
+	SET IDL=0;
+	SET IDLD=0;
+	SET CONT=0;
+	SET CONT2=0;
+	SET CONT3=0;
+	SET CONT4=0;
+
+	SET TOT=0;
+	SET TOTV=0;
+	SET TOTC=0;
+	SET TOTB=0;
+	SET TOTA=0;
+    SET TOTD=0;
+    SET SUBS=0;
+	SET CAMBIO=0;
+	SET DEUDA=0;
+	SET POR=0;
+	SET DEUDAA=0;
+	SET RESIDUO=0;
+	SET CANTIDAD=0;
+
+		select id_cuenta into IDC from cuentas where id_cuenta=pid_cuenta;
+		if IDC>0 then
+
+			select id_ticket into IDT from cuentas where id_cuenta=IDC;
+			if IDT > 0 then
+
+				select id_mp into IDMP from metodos_de_p where id_mp=pid_mp;
+					if IDMP > 0 then
+						if IDMP = 1 then
+							select id_empleado into IDEM from empleados where id_empleado=pid_empleado;
+							if IDEM > 0 then
+
+								select estado into ESC from cuentas where id_cuenta=pid_cuenta;
+								if ESC = 1 then
+									select count(id_cuenta) into CONT from cuentas,tickets where cuentas.id_ticket=tickets.id_ticket and cuentas.estado=2 and tickets.estado=1 and cuentas.id_ticket=IDT;
+									if CONT > 0 then
+
+										select IF(ISNULL(sum(ventas.subtotal)),0,sum(ventas.subtotal)) into TOTV  from ventas,tickets,locaciones,cuentas where ventas.estado=1 and locaciones.estado=2 and tickets.estado=1 and cuentas.estado=1 and ventas.id_cuenta=IDC and ventas.id_cuenta=cuentas.id_cuenta and tickets.id_ticket=locaciones.id_ticket and cuentas.id_ticket=tickets.id_ticket;
+										select IF(ISNULL(sum(complementos.subtotal)),0,sum(complementos.subtotal)) into TOTC from complementos,tickets,locaciones,cuentas where complementos.estado=1 and locaciones.estado=2 and tickets.estado=1 and cuentas.estado=1 and complementos.id_cuenta=IDC and complementos.id_cuenta=cuentas.id_cuenta and locaciones.id_ticket=tickets.id_ticket and cuentas.id_ticket=tickets.id_ticket;
+										select IF(ISNULL(sum(ventasB.subtotal)),0,sum(ventasB.subtotal)) into TOTB  from ventasB,tickets,locaciones,cuentas where ventasB.estado=1 and locaciones.estado=2 and tickets.estado=1 and cuentas.estado=1 and ventasB.id_cuenta=IDC and ventasB.id_cuenta=cuentas.id_cuenta and tickets.id_ticket=locaciones.id_ticket and cuentas.id_ticket=tickets.id_ticket;
+
+										SET TOT=TOTV+TOTC+TOTB;
+										select monto into POR from descuentos where id_descuento=pid_descuento;
+										SET POR=POR/100;
+										SET POR=TOT*POR;
+										SET POR=TOT-POR;
+										SET CAMBIO=POR-pcantidad;
+
+										update ventas set estado=0 where id_cuenta=IDC and estado=1;
+										update complementos set estado=0 where id_cuenta=IDC and estado=1;
+										update ventasB set estado=0 where id_cuenta=IDC and estado=1;
+
+										if CAMBIO > 0 then
+											update cuentas set total=total+pcantidad where id_cuenta=IDC;
+											update tickets set total=total+pcantidad where id_ticket=IDT;
+											update cuentas set total_e=total_e+pcantidad where id_cuenta=IDC;
+											update cuentas set estado=2 where id_cuenta=IDC;
+                                            update cuentas set subtotal=CAMBIO where id_cuenta=IDC;
+											update tickets set subtotal=(subtotal-TOT)+ABS(CAMBIO) where id_ticket=IDT;
+											update tickets set id_empleado=pid_empleado where id_ticket=IDT;
+											insert 	into metodos_p values(null,pid_mp,IDT,IDC);
+											select 'Cuenta no pagada' as mensaje;
+
+										else
+											update tickets set total=total+POR where id_ticket=IDT;
+											update cuentas set total=POR where id_cuenta=IDC;
+											update cuentas set total_e=POR where id_cuenta=IDC;
+                                            select subtotal into SUBS from cuentas where id_cuenta=IDC;
+                                            update tickets set subtotal=subtotal-SUBS where id_ticket=IDT;
+											update cuentas set subtotal=0 where id_cuenta=IDC;
+											update cuentas set estado=0 where id_cuenta=IDC;
+											update tickets set id_empleado=pid_empleado where id_ticket=IDT;
+											insert 	into metodos_p values(null,pid_mp,IDT,IDC);
+
+			                                    if CAMBIO=0 then
+													select 'Cuenta Pagada' as mensaje;
+			                                    else
+													select CONCAT('El cambio es:', ABS(CAMBIO));
+			                                    end if;
+										end if;
+									else
+										select count(id_cuenta) into CONT2 from cuentas,tickets where cuentas.id_ticket=tickets.id_ticket and cuentas.estado=1 and tickets.estado=1 and cuentas.id_ticket=IDT;
+										if CONT2 > 1 then
+
+											select IF(ISNULL(sum(ventas.subtotal)),0,sum(ventas.subtotal)) into TOTV  from ventas,tickets,locaciones,cuentas where ventas.estado=1 and locaciones.estado=2 and tickets.estado=1 and cuentas.estado=1 and ventas.id_cuenta=IDC and ventas.id_cuenta=cuentas.id_cuenta and tickets.id_ticket=locaciones.id_ticket and cuentas.id_ticket=tickets.id_ticket;
+											select IF(ISNULL(sum(complementos.subtotal)),0,sum(complementos.subtotal)) into TOTC from complementos,tickets,locaciones,cuentas where complementos.estado=1 and locaciones.estado=2 and tickets.estado=1 and cuentas.estado=1 and complementos.id_cuenta=IDC and complementos.id_cuenta=cuentas.id_cuenta and locaciones.id_ticket=tickets.id_ticket and cuentas.id_ticket=tickets.id_ticket;
+											select IF(ISNULL(sum(ventasB.subtotal)),0,sum(ventasB.subtotal)) into TOTB  from ventasB,tickets,locaciones,cuentas where ventasB.estado=1 and locaciones.estado=2 and tickets.estado=1 and cuentas.estado=1 and ventasB.id_cuenta=IDC and ventasB.id_cuenta=cuentas.id_cuenta and tickets.id_ticket=locaciones.id_ticket and cuentas.id_ticket=tickets.id_ticket;
+
+											SET TOT=TOTV+TOTC+TOTB;
+											select monto into POR from descuentos where id_descuento=pid_descuento;
+											SET POR=POR/100;
+											SET POR=TOT*POR;
+											SET POR=TOT-POR;
+											SET CAMBIO=POR-pcantidad;
+
+											update ventas set estado=0 where id_cuenta=IDC and estado=1;
+											update complementos set estado=0 where id_cuenta=IDC and estado=1;
+											update ventasB set estado=0 where id_cuenta=IDC and estado=1;
+
+											if CAMBIO > 0 then
+												update cuentas set total=total+pcantidad where id_cuenta=IDC;
+                                                update tickets set total=total+pcantidad where id_ticket=IDT;
+												update cuentas set total_e=total_e+pcantidad where id_cuenta=IDC;
+												update cuentas set estado=2 where id_cuenta=IDC;
+												update cuentas set subtotal=CAMBIO where id_cuenta=IDC;
+												update tickets set subtotal=(subtotal-TOT)+ABS(CAMBIO) where id_ticket=IDT;
+												update tickets set id_empleado=pid_empleado where id_ticket=IDT;
+												insert 	into metodos_p values(null,pid_mp,IDT,IDC);
+												select 'Cuenta no pagada' as mensaje;
+
+											else
+												update tickets set total=total+POR where id_ticket=IDT;
+												update cuentas set total=POR where id_cuenta=IDC;
+												update cuentas set total_e=POR where id_cuenta=IDC;
+                                                select subtotal into SUBS from cuentas where id_cuenta=IDC;
+                                                update tickets set subtotal=subtotal-SUBS where id_ticket=IDT;
+												update cuentas set subtotal=0 where id_cuenta=IDC;
+												update cuentas set estado=0 where id_cuenta=IDC;
+												update tickets set id_empleado=pid_empleado where id_ticket=IDT;
+												insert 	into metodos_p values(null,pid_mp,IDT,IDC);
+
+				                                    if CAMBIO=0 then
+														select 'Cuenta Pagada' as mensaje;
+				                                    else
+														select CONCAT('El cambio es:', ABS(CAMBIO));
+				                                    end if;
+											end if;
+										else
+											select IF(ISNULL(sum(ventas.subtotal)),0,sum(ventas.subtotal)) into TOTV  from ventas,tickets,locaciones,cuentas where ventas.estado=1 and locaciones.estado=2 and tickets.estado=1 and cuentas.estado=1 and ventas.id_cuenta=IDC and ventas.id_cuenta=cuentas.id_cuenta and tickets.id_ticket=locaciones.id_ticket and cuentas.id_ticket=tickets.id_ticket;
+											select IF(ISNULL(sum(complementos.subtotal)),0,sum(complementos.subtotal)) into TOTC from complementos,tickets,locaciones,cuentas where complementos.estado=1 and locaciones.estado=2 and tickets.estado=1 and cuentas.estado=1 and complementos.id_cuenta=IDC and complementos.id_cuenta=cuentas.id_cuenta and locaciones.id_ticket=tickets.id_ticket and cuentas.id_ticket=tickets.id_ticket;
+											select IF(ISNULL(sum(ventasB.subtotal)),0,sum(ventasB.subtotal)) into TOTB  from ventasB,tickets,locaciones,cuentas where ventasB.estado=1 and locaciones.estado=2 and tickets.estado=1 and cuentas.estado=1 and ventasB.id_cuenta=IDC and ventasB.id_cuenta=cuentas.id_cuenta and tickets.id_ticket=locaciones.id_ticket and cuentas.id_ticket=tickets.id_ticket;
+
+											SET TOT=TOTV+TOTC+TOTB;
+											select monto into POR from descuentos where id_descuento=pid_descuento;
+											SET POR=POR/100;
+											SET POR=TOT*POR;
+											SET POR=TOT-POR;
+											SET CAMBIO=POR-pcantidad;
+
+											update ventas set estado=0 where id_cuenta=IDC and estado=1;
+											update complementos set estado=0 where id_cuenta=IDC and estado=1;
+											update ventasB set estado=0 where id_cuenta=IDC and estado=1;
+
+												if CAMBIO > 0 then
+													update cuentas set total=total+pcantidad where id_cuenta=IDC;
+                                                    update tickets set total=total+pcantidad where id_ticket=IDT;
+													update cuentas set total_e=total_e+pcantidad where id_cuenta=IDC;
+													update cuentas set estado=2 where id_cuenta=IDC;
+													update cuentas set subtotal=CAMBIO where id_cuenta=IDC;
+                                                    update tickets set subtotal=(subtotal-TOT)+ABS(CAMBIO) where id_ticket=IDT;
+													update tickets set id_empleado=pid_empleado where id_ticket=IDT;
+													insert 	into metodos_p values(null,pid_mp,IDT,IDC);
+													select 'Cuenta no pagada' as mensaje;
+
+												else
+													update tickets set total=total+POR where id_ticket=IDT;
+                                                    update cuentas set total=POR where id_cuenta=IDC;
+													update cuentas set total_e=POR where id_cuenta=IDC;
+													select id_locacion into IDL from cuentas where id_cuenta=IDC;
+													update locaciones set estado=1 where id_locacion=IDL;
+													update locaciones set id_ticket=0 where id_locacion=IDL;
+													update tickets set subtotal=0 where id_ticket=IDT;
+													update cuentas set subtotal=0 where id_cuenta=IDC;
+													update tickets set estado=0 where id_ticket=IDT;
+													update cuentas set estado=0 where id_cuenta=IDC;
+													update tickets set id_empleado=pid_empleado where id_ticket=IDT;
+													insert 	into metodos_p values(null,pid_mp,IDT,IDC);
+			                                            if CAMBIO=0 then
+															select 'Locacion Pagada' as mensaje;
+			                                            else
+															select CONCAT('El cambio es:', ABS(CAMBIO));
+			                                            end if;
+												end if;
+										end if;
+									end if;
+								else
+
+									if ESC = 2 then
+										select count(id_cuenta) into CONT3 from cuentas,tickets where cuentas.id_ticket=tickets.id_ticket and cuentas.estado=1 and tickets.estado=1 and cuentas.id_ticket=IDT;
+										if CONT3 > 0 then
+												select subtotal into DEUDA from cuentas where id_cuenta=IDC and estado=2;
+												select monto into POR from descuentos where id_descuento=pid_descuento;
+
+
+												SET POR=POR/100;
+												SET POR=DEUDA*POR;
+												SET POR=DEUDA-POR;
+												SET TOTD=POR-pcantidad;
+												if TOTD > 0 then
+													update cuentas set total_e=total_e+pcantidad where id_cuenta=IDC;
+													update cuentas set total=total+pcantidad where id_cuenta=IDC;
+													update tickets set total=total+pcantidad where id_ticket=IDT;
+                                                    select subtotal into SUBS from cuentas where id_cuenta=IDC;
+                                                    update cuentas set subtotal=(subtotal-SUBS)+TOTD where id_cuenta=IDC and estado=2;
+													update tickets set subtotal=(subtotal-SUBS)+TOTD where id_ticket=IDT;
+													insert 	into metodos_p values(null,pid_mp,IDT,IDC);
+													select 'Cuenta no pagada' as mensaje;
+												else
+													update cuentas set total_e=total_e+POR where id_cuenta=IDC;
+													update cuentas set total=total+POR where id_cuenta=IDC;
+													update tickets set total=total+POR where id_ticket=IDT;
+													update tickets set subtotal=0 where id_ticket=IDT;
+													update cuentas set subtotal=0 where id_cuenta=IDC;
+													update cuentas set estado=0 where id_cuenta=IDC;
+													insert 	into metodos_p values(null,pid_mp,IDT,IDC);
+						                        	    if TOTD=0 then
+															select 'Cuenta pagada' as mensaje;
+						                                else
+															select CONCAT('El cambio es:', abs(TOTD));
+														end if;
+												end if;
+										else
+											select count(id_cuenta) into CONT4 from cuentas,tickets where cuentas.id_ticket=tickets.id_ticket and cuentas.estado=2 and tickets.estado=1 and cuentas.id_ticket=IDT;
+											if CONT4 > 1 then
+												select subtotal into DEUDA from cuentas where id_cuenta=IDC and estado=2;
+												select monto into POR from descuentos where id_descuento=pid_descuento;
+
+
+												SET POR=POR/100;
+												SET POR=DEUDA*POR;
+												SET POR=DEUDA-POR;
+												SET TOTD=POR-pcantidad;
+
+												if TOTD > 0 then
+													update cuentas set total_e=total_e+pcantidad where id_cuenta=IDC;
+													update cuentas set total=total+pcantidad where id_cuenta=IDC;
+													update tickets set total=total+pcantidad where id_ticket=IDT;
+                                                    select subtotal into SUBS from cuentas where id_cuenta=IDC;
+                                                    update cuentas set subtotal=(subtotal-SUBS)+TOTD where id_cuenta=IDC and estado=2;
+													update tickets set subtotal=(subtotal-SUBS)+TOTD where id_ticket=IDT;
+													insert 	into metodos_p values(null,pid_mp,IDT,IDC);
+													select 'Cuenta no pagada' as mensaje;
+												else
+													update cuentas set total_e=total_e+POR where id_cuenta=IDC;
+													update cuentas set total=total+POR where id_cuenta=IDC;
+													update tickets set total=total+POR where id_ticket=IDT;
+													update tickets set subtotal=0 where id_ticket=IDT;
+													update cuentas set subtotal=0 where id_cuenta=IDC;
+													update cuentas set estado=0 where id_cuenta=IDC;
+													insert 	into metodos_p values(null,pid_mp,IDT,IDC);
+						                        	    if TOTD=0 then
+															select 'Cuenta pagada' as mensaje;
+						                                else
+															select CONCAT('El cambio es:', abs(TOTD));
+														end if;
+												end if;
+											else
+
+												select subtotal into DEUDA from cuentas where id_cuenta=IDC and estado=2;
+												select monto into POR from descuentos where id_descuento=pid_descuento;
+
+												SET POR=POR/100;
+												SET POR=DEUDA*POR;
+												SET POR=DEUDA-POR;
+												SET TOTD=POR-pcantidad;
+
+
+													if TOTD > 0 then
+														update cuentas set total_e=total_e+pcantidad where id_cuenta=IDC;
+														update cuentas set total=total+pcantidad where id_cuenta=IDC;
+														update tickets set total=total+pcantidad where id_ticket=IDT;
+                                                        select subtotal into SUBS from cuentas where id_cuenta=IDC;
+                                                        update cuentas set subtotal=(subtotal-SUBS)+TOTD where id_cuenta=IDC and estado=2;
+														update tickets set subtotal=(subtotal-SUBS)+TOTD where id_ticket=IDT;
+														insert 	into metodos_p values(null,pid_mp,IDT,IDC);
+													    select 'Cuenta no pagada' as mensaje;
+													else
+														update cuentas set total_e=total_e+POR where id_cuenta=IDC;
+														update cuentas set total=total+POR where id_cuenta=IDC;
+														update tickets set total=total+POR where id_ticket=IDT;
+														update tickets set subtotal=0 where id_ticket=IDT;
+														update cuentas set subtotal=0 where id_cuenta=IDC;
+														update tickets set estado=0 where id_ticket=IDT;
+														update cuentas set estado=0 where id_cuenta=IDC;
+                                                        select id_locacion into IDLD from locaciones where id_ticket=IDT and estado=2;
+														update locaciones set estado=1 where id_locacion=IDLD;
+														update locaciones set id_ticket=0 where id_locacion=IDLD;
+														insert 	into metodos_p values(null,pid_mp,IDT,IDC);
+						                                   if DEUDA=0 then
+																select 'Locacion pagada' as mensaje;
+						                                    else
+																select CONCAT('El cambio es:', abs(TOTD));
+															end if;
+													end if;
+											end if;
+										end if;
+									else
+
+										if ESC = 3 then
+											select 'La cuenta ha sido cancelada' as mensaje;
+										else
+
+											if ESC = 0 then
+												select 'La cuenta ha sido pagada' as mensaje;
+											else
+												select 'Error en la cuenta' as mensaje;
+											end if;
+										end if;
+									end if;
+								end if;
+							else
+							select 'El empleado no existe' as mensaje;
+							end if;
+						else
+							select id_empleado into IDEM from empleados where id_empleado=pid_empleado;
+							if IDEM > 0 then
+
+								select estado into ESC from cuentas where id_cuenta=pid_cuenta;
+								if ESC = 1 then
+									select count(id_cuenta) into CONT from cuentas,tickets where cuentas.id_ticket=tickets.id_ticket and cuentas.estado=2 and tickets.estado=1 and cuentas.id_ticket=IDT;
+									if CONT > 0 then
+
+										select IF(ISNULL(sum(ventas.subtotal)),0,sum(ventas.subtotal)) into TOTV  from ventas,tickets,locaciones,cuentas where ventas.estado=1 and locaciones.estado=2 and tickets.estado=1 and cuentas.estado=1 and ventas.id_cuenta=IDC and ventas.id_cuenta=cuentas.id_cuenta and tickets.id_ticket=locaciones.id_ticket and cuentas.id_ticket=tickets.id_ticket;
+										select IF(ISNULL(sum(complementos.subtotal)),0,sum(complementos.subtotal)) into TOTC from complementos,tickets,locaciones,cuentas where complementos.estado=1 and locaciones.estado=2 and tickets.estado=1 and cuentas.estado=1 and complementos.id_cuenta=IDC and complementos.id_cuenta=cuentas.id_cuenta and locaciones.id_ticket=tickets.id_ticket and cuentas.id_ticket=tickets.id_ticket;
+										select IF(ISNULL(sum(ventasB.subtotal)),0,sum(ventasB.subtotal)) into TOTB  from ventasB,tickets,locaciones,cuentas where ventasB.estado=1 and locaciones.estado=2 and tickets.estado=1 and cuentas.estado=1 and ventasB.id_cuenta=IDC and ventasB.id_cuenta=cuentas.id_cuenta and tickets.id_ticket=locaciones.id_ticket and cuentas.id_ticket=tickets.id_ticket;
+
+										SET TOT=TOTV+TOTC+TOTB;
+										select monto into POR from descuentos where id_descuento=pid_descuento;
+										SET POR=POR/100;
+										SET POR=TOT*POR;
+										SET POR=TOT-POR;
+										SET CAMBIO=POR-pcantidad;
+
+										update ventas set estado=0 where id_cuenta=IDC and estado=1;
+										update complementos set estado=0 where id_cuenta=IDC and estado=1;
+										update ventasB set estado=0 where id_cuenta=IDC and estado=1;
+
+										if CAMBIO > 0 then
+											update cuentas set total=total+pcantidad where id_cuenta=IDC;
+											update tickets set total=total+pcantidad where id_ticket=IDT;
+											update cuentas set total_c=total_c+pcantidad where id_cuenta=IDC;
+											update cuentas set estado=2 where id_cuenta=IDC;
+											update cuentas set subtotal=CAMBIO where id_cuenta=IDC;
+											update tickets set subtotal=(subtotal-TOT)+ABS(CAMBIO) where id_ticket=IDT;
+											update tickets set id_empleado=pid_empleado where id_ticket=IDT;
+											insert 	into metodos_p values(null,pid_mp,IDT,IDC);
+											select 'Cuenta no pagada' as mensaje;
+
+										else
+											update tickets set total=total+POR where id_ticket=IDT;
+											update cuentas set total=POR where id_cuenta=IDC;
+											update cuentas set total_c=POR where id_cuenta=IDC;
+                                            select subtotal into SUBS from cuentas where id_cuenta=IDC;
+                                            update tickets set subtotal=subtotal-SUBS where id_ticket=IDT;
+											update cuentas set subtotal=0 where id_cuenta=IDC;
+											update cuentas set estado=0 where id_cuenta=IDC;
+											update tickets set id_empleado=pid_empleado where id_ticket=IDT;
+											insert 	into metodos_p values(null,pid_mp,IDT,IDC);
+
+			                                    if CAMBIO=0 then
+													select 'Cuenta Pagada' as mensaje;
+			                                    else
+													select CONCAT('El cambio es:', ABS(CAMBIO));
+			                                    end if;
+										end if;
+									else
+										select count(id_cuenta) into CONT2 from cuentas,tickets where cuentas.id_ticket=tickets.id_ticket and cuentas.estado=1 and tickets.estado=1 and cuentas.id_ticket=IDT;
+										if CONT2 > 1 then
+
+											select IF(ISNULL(sum(ventas.subtotal)),0,sum(ventas.subtotal)) into TOTV  from ventas,tickets,locaciones,cuentas where ventas.estado=1 and locaciones.estado=2 and tickets.estado=1 and cuentas.estado=1 and ventas.id_cuenta=IDC and ventas.id_cuenta=cuentas.id_cuenta and tickets.id_ticket=locaciones.id_ticket and cuentas.id_ticket=tickets.id_ticket;
+											select IF(ISNULL(sum(complementos.subtotal)),0,sum(complementos.subtotal)) into TOTC from complementos,tickets,locaciones,cuentas where complementos.estado=1 and locaciones.estado=2 and tickets.estado=1 and cuentas.estado=1 and complementos.id_cuenta=IDC and complementos.id_cuenta=cuentas.id_cuenta and locaciones.id_ticket=tickets.id_ticket and cuentas.id_ticket=tickets.id_ticket;
+											select IF(ISNULL(sum(ventasB.subtotal)),0,sum(ventasB.subtotal)) into TOTB  from ventasB,tickets,locaciones,cuentas where ventasB.estado=1 and locaciones.estado=2 and tickets.estado=1 and cuentas.estado=1 and ventasB.id_cuenta=IDC and ventasB.id_cuenta=cuentas.id_cuenta and tickets.id_ticket=locaciones.id_ticket and cuentas.id_ticket=tickets.id_ticket;
+
+											SET TOT=TOTV+TOTC+TOTB;
+											select monto into POR from descuentos where id_descuento=pid_descuento;
+											SET POR=POR/100;
+											SET POR=TOT*POR;
+											SET POR=TOT-POR;
+											SET CAMBIO=POR-pcantidad;
+
+											update ventas set estado=0 where id_cuenta=IDC and estado=1;
+											update complementos set estado=0 where id_cuenta=IDC and estado=1;
+											update ventasB set estado=0 where id_cuenta=IDC and estado=1;
+
+											if CAMBIO > 0 then
+												update cuentas set total=total+pcantidad where id_cuenta=IDC;
+												update tickets set total=total+pcantidad where id_ticket=IDT;
+												update cuentas set total_c=total_c+pcantidad where id_cuenta=IDC;
+												update cuentas set total_c=total_c+pcantidad where id_cuenta=IDC;
+												update cuentas set estado=2 where id_cuenta=IDC;
+												update cuentas set subtotal=CAMBIO where id_cuenta=IDC;
+                                                update tickets set subtotal=(subtotal-TOT)+ABS(CAMBIO) where id_ticket=IDT;
+												update tickets set id_empleado=pid_empleado where id_ticket=IDT;
+												insert 	into metodos_p values(null,pid_mp,IDT,IDC);
+												select 'Cuenta no pagada' as mensaje;
+
+											else
+												update tickets set total=total+POR where id_ticket=IDT;
+												update cuentas set total=POR where id_cuenta=IDC;
+												update cuentas set total_c=POR where id_cuenta=IDC;
+												select subtotal into SUBS from cuentas where id_cuenta=IDC;
+												update tickets set subtotal=subtotal-SUBS where id_ticket=IDT;
+												update cuentas set subtotal=0 where id_cuenta=IDC;
+												update cuentas set estado=0 where id_cuenta=IDC;
+												update tickets set id_empleado=pid_empleado where id_ticket=IDT;
+												insert 	into metodos_p values(null,pid_mp,IDT,IDC);
+
+				                                    if CAMBIO=0 then
+														select 'Cuenta Pagada' as mensaje;
+				                                    else
+														select CONCAT('El cambio es:', ABS(CAMBIO));
+				                                    end if;
+											end if;
+										else
+											select IF(ISNULL(sum(ventas.subtotal)),0,sum(ventas.subtotal)) into TOTV  from ventas,tickets,locaciones,cuentas where ventas.estado=1 and locaciones.estado=2 and tickets.estado=1 and cuentas.estado=1 and ventas.id_cuenta=IDC and ventas.id_cuenta=cuentas.id_cuenta and tickets.id_ticket=locaciones.id_ticket and cuentas.id_ticket=tickets.id_ticket;
+											select IF(ISNULL(sum(complementos.subtotal)),0,sum(complementos.subtotal)) into TOTC from complementos,tickets,locaciones,cuentas where complementos.estado=1 and locaciones.estado=2 and tickets.estado=1 and cuentas.estado=1 and complementos.id_cuenta=IDC and complementos.id_cuenta=cuentas.id_cuenta and locaciones.id_ticket=tickets.id_ticket and cuentas.id_ticket=tickets.id_ticket;
+											select IF(ISNULL(sum(ventasB.subtotal)),0,sum(ventasB.subtotal)) into TOTB  from ventasB,tickets,locaciones,cuentas where ventasB.estado=1 and locaciones.estado=2 and tickets.estado=1 and cuentas.estado=1 and ventasB.id_cuenta=IDC and ventasB.id_cuenta=cuentas.id_cuenta and tickets.id_ticket=locaciones.id_ticket and cuentas.id_ticket=tickets.id_ticket;
+
+											SET TOT=TOTV+TOTC+TOTB;
+											select monto into POR from descuentos where id_descuento=pid_descuento;
+											SET POR=POR/100;
+											SET POR=TOT*POR;
+											SET POR=TOT-POR;
+											SET CAMBIO=POR-pcantidad;
+
+											update ventas set estado=0 where id_cuenta=IDC and estado=1;
+											update complementos set estado=0 where id_cuenta=IDC and estado=1;
+											update ventasB set estado=0 where id_cuenta=IDC and estado=1;
+
+												if CAMBIO > 0 then
+													update cuentas set total=total+pcantidad where id_cuenta=IDC;
+                                                    update tickets set total=total+pcantidad where id_ticket=IDT;
+													update cuentas set total_c=total_c+pcantidad where id_cuenta=IDC;
+													update cuentas set estado=2 where id_cuenta=IDC;
+													update cuentas set subtotal=CAMBIO where id_cuenta=IDC;
+                                                    update tickets set subtotal=(subtotal-TOT)+ABS(CAMBIO) where id_ticket=IDT;
+													update tickets set id_empleado=pid_empleado where id_ticket=IDT;
+													insert 	into metodos_p values(null,pid_mp,IDT,IDC);
+													select 'Cuenta no pagada' as mensaje;
+
+												else
+													update tickets set total=total+POR where id_ticket=IDT;
+                                                    update cuentas set total=POR where id_cuenta=IDC;
+													update cuentas set total_c=POR where id_cuenta=IDC;
+													select id_locacion into IDL from cuentas where id_cuenta=IDC;
+													update locaciones set estado=1 where id_locacion=IDL;
+													update locaciones set id_ticket=0 where id_locacion=IDL;
+													update tickets set subtotal=0 where id_ticket=IDT;
+													update cuentas set subtotal=0 where id_cuenta=IDC;
+													update tickets set estado=0 where id_ticket=IDT;
+													update cuentas set estado=0 where id_cuenta=IDC;
+													update tickets set id_empleado=pid_empleado where id_ticket=IDT;
+													insert 	into metodos_p values(null,pid_mp,IDT,IDC);
+			                                            if CAMBIO=0 then
+															select 'Locacion Pagada' as mensaje;
+			                                            else
+															select CONCAT('El cambio es:', ABS(CAMBIO));
+			                                            end if;
+												end if;
+										end if;
+									end if;
+								else
+
+									if ESC = 2 then
+										select count(id_cuenta) into CONT3 from cuentas,tickets where cuentas.id_ticket=tickets.id_ticket and cuentas.estado=1 and tickets.estado=1 and cuentas.id_ticket=IDT;
+										if CONT3 > 0 then
+											select subtotal into DEUDA from cuentas where id_cuenta=IDC and estado=2;
+											select monto into POR from descuentos where id_descuento=pid_descuento;
+
+											SET POR=POR/100;
+											SET POR=DEUDA*POR;
+											SET POR=DEUDA-POR;
+											SET TOTD=POR-pcantidad;
+
+											if TOTD > 0 then
+												update cuentas set total_c=total_c+pcantidad where id_cuenta=IDC;
+												update cuentas set total=total+pcantidad where id_cuenta=IDC;
+												update tickets set total=total+pcantidad where id_ticket=IDT;
+                                                select subtotal into SUBS from cuentas where id_cuenta=IDC;
+												update cuentas set subtotal=(subtotal-SUBS)+TOTD where id_cuenta=IDC and estado=2;
+												update tickets set subtotal=(subtotal-SUBS)+TOTD where id_ticket=IDT;
+												insert 	into metodos_p values(null,pid_mp,IDT,IDC);
+												select 'Cuenta no pagada' as mensaje;
+											else
+												update cuentas set total_c=total_c+POR where id_cuenta=IDC;
+												update cuentas set total=total+POR where id_cuenta=IDC;
+												update tickets set total=total+POR where id_ticket=IDT;
+												update tickets set subtotal=0 where id_ticket=IDT;
+												update cuentas set subtotal=0 where id_cuenta=IDC;
+												update cuentas set estado=0 where id_cuenta=IDC;
+												insert 	into metodos_p values(null,pid_mp,IDT,IDC);
+						                       	    if TOTD=0 then
+														select 'Locacion pagada' as mensaje;
+						                            else
+														select CONCAT('El cambio es:', abs(TOTD));
+													end if;
+											end if;
+										else
+											select count(id_cuenta) into CONT4 from cuentas,tickets where cuentas.id_ticket=tickets.id_ticket and cuentas.estado=2 and tickets.estado=1 and cuentas.id_ticket=IDT;
+											if CONT4 > 1 then
+												select subtotal into DEUDA from cuentas where id_cuenta=IDC and estado=2;
+												select monto into POR from descuentos where id_descuento=pid_descuento;
+
+												SET POR=POR/100;
+												SET POR=DEUDA*POR;
+												SET POR=DEUDA-POR;
+												SET TOTD=POR-pcantidad;
+
+												if TOTD > 0 then
+													update cuentas set total_c=total_c+pcantidad where id_cuenta=IDC;
+													update cuentas set total=total+pcantidad where id_cuenta=IDC;
+													update tickets set total=total+pcantidad where id_ticket=IDT;
+                                                    select subtotal into SUBS from cuentas where id_cuenta=IDC;
+													update cuentas set subtotal=(subtotal-SUBS)+TOTD where id_cuenta=IDC and estado=2;
+													update tickets set subtotal=(subtotal-SUBS)+TOTD where id_ticket=IDT;
+													insert 	into metodos_p values(null,pid_mp,IDT,IDC);
+													select 'Cuenta no pagada' as mensaje;
+												else
+													update cuentas set total_c=total_c+POR where id_cuenta=IDC;
+													update cuentas set total=total+POR where id_cuenta=IDC;
+													update tickets set total=total+POR where id_ticket=IDT;
+													update tickets set subtotal=0 where id_ticket=IDT;
+													update cuentas set subtotal=0 where id_cuenta=IDC;
+													update cuentas set estado=0 where id_cuenta=IDC;
+													insert 	into metodos_p values(null,pid_mp,IDT,IDC);
+						                        	    if TOTD=0 then
+															select 'Locacion pagada' as mensaje;
+						                                else
+															select CONCAT('El cambio es:', abs(TOTD));
+														end if;
+												end if;
+											else
+
+												select subtotal into DEUDA from cuentas where id_cuenta=IDC and estado=2;
+												select monto into POR from descuentos where id_descuento=pid_descuento;
+
+												SET POR=POR/100;
+												SET POR=DEUDA*POR;
+												SET POR=DEUDA-POR;
+												SET TOTD=POR-pcantidad;
+
+													if TOTD > 0 then
+														update cuentas set total_c=total_c+pcantidad where id_cuenta=IDC;
+														update cuentas set total=total+pcantidad where id_cuenta=IDC;
+														update tickets set total=total+pcantidad where id_ticket=IDT;
+                                                        select subtotal into SUBS from cuentas where id_cuenta=IDC;
+														update cuentas set subtotal=(subtotal-SUBS)+TOTD where id_cuenta=IDC and estado=2;
+														update tickets set subtotal=(subtotal-SUBS)+TOTD where id_ticket=IDT;
+														insert 	into metodos_p values(null,pid_mp,IDT,IDC);
+													    select 'Cuenta no pagada' as mensaje;
+													else
+														update cuentas set total_c=total_c+POR where id_cuenta=IDC;
+														update cuentas set total=total+POR where id_cuenta=IDC;
+														update tickets set total=total+POR where id_ticket=IDT;
+														update tickets set subtotal=0 where id_ticket=IDT;
+														update cuentas set subtotal=0 where id_cuenta=IDC;
+														update tickets set estado=0 where id_ticket=IDT;
+														update cuentas set estado=0 where id_cuenta=IDC;
+                                                        select id_locacion into IDLD from locaciones where id_ticket=IDT and estado=2;
+														update locaciones set estado=1 where id_locacion=IDLD;
+														update locaciones set id_ticket=0 where id_locacion=IDLD;
+														insert 	into metodos_p values(null,pid_mp,IDT,IDC);
+						                                   if TOTD=0 then
+																select 'Locacion pagada' as mensaje;
+						                                    else
+																select CONCAT('El cambio es:', abs(TOTD));
+															end if;
+													end if;
+											end if;
+										end if;
+									else
+
+										if ESC = 3 then
+											select 'La cuenta ha sido cancelada' as mensaje;
+										else
+
+											if ESC = 0 then
+												select 'La cuenta ha sido pagada' as mensaje;
+											else
+												select 'Error en la cuenta' as mensaje;
+											end if;
+										end if;
+									end if;
+								end if;
+							else
+							select 'El empleado no existe' as mensaje;
+							end if;
+						end if;
+
+					else
+					select 'El metodo de pago no existe' as mensaje;
+					end if;
+			else
+			select 'El ticket no existe' as mensaje;
+			end if;
+
+		else
+		select 'La cuenta no existe' as mensaje;
+		end if;
+END;
+/**************************************************************************************************************
+call PAGO_TICKET2([Parametros normales],@cambi[Nombre de variable de salida con "@" al principio]);
+//Forma de usar un procedimiento con parametro de salida
+**************************************************************************************************************/
+delimiter $$
+create procedure CIERRE_S( in pid_usuario int,in pcantidad_i float)
+
+BEGIN
+
+	DECLARE CS INT;
+	DECLARE EC INT;
+	DECLARE EI INT;
+	DECLARE IDR INT;
+	DECLARE TOT FLOAT;
+	DECLARE TOTE FLOAT;
+	DECLARE TOTC FLOAT;
+	DECLARE TOTCL FLOAT;
+	DECLARE TOTF FLOAT;
+	DECLARE IDT INT;
+	DECLARE IDC INT;
+	DECLARE FI DATETIME;
+
+	SET CS=0;
+	SET EC=0;
+	SET EI=0;
+	SET IDR=0;
+	SET TOT=0;
+	SET TOTE=0;
+	SET TOTC=0;
+	SET TOTCL=0;
+	SET TOTF=0;
+	SET IDT=0;
+	SET IDC=0;
+
+			select id_role into IDR from usuarios where id_usuario=pid_usuario;
+			if IDR=2 then
+
+				select count(id_sesion) into CS from t_sesiones;
+				if CS > 0 then
+
+					select count(id_ticket) into IDT from tickets where estado=1;
+					if IDT > 0 then
+						select 'Quedan tickets activos' as mensaje;
+					else
+						select count(id_cuenta) into IDC from cuentas where estado=2;
+						if IDC > 0 then
+							select 'Quedan cuentas adeudadas' as mensaje;
+						else
+							select estado_i into EI from t_sesiones where id_sesion=CS;
+							select estado_c into EC from t_sesiones where id_sesion=CS;
+
+							if EC=2 && EI=1 then
+								update t_sesiones set estado_i=2,fecha_c=now(),estado_c=1,id_usuario_c=pid_usuario where id_sesion=CS;
+								select fecha_i into FI from t_sesiones where id_sesion=CS;
+								select IF(ISNULL(sum(total)),0,sum(total)) into	TOT from tickets where estado=0 and fecha between (select fecha_i from t_sesiones where id_sesion=CS) and (select fecha_c from t_sesiones where id_sesion=CS);
+								select IF(ISNULL(sum(cuentas.total_e)),0,sum(cuentas.total_e))into TOTE from metodos_p,cuentas where cuentas.fecha between (select fecha_i from t_sesiones where id_sesion=CS) and (select fecha_c from t_sesiones where id_sesion=CS) AND cuentas.estado=0 and metodos_p.id_mp=1 and cuentas.id_cuenta=metodos_p.id_cuenta;
+								select IF(ISNULL(sum(cuentas.total_c)),0,sum(cuentas.total_c)) into TOTC from cuentas,metodos_p where cuentas.fecha between (select fecha_i from t_sesiones where id_sesion=CS) and (select fecha_c from t_sesiones where id_sesion=CS) AND cuentas.estado=0 and metodos_p.id_mp=2 and cuentas.id_cuenta=metodos_p.id_cuenta;
+								SET TOTF=TOT;
+								SET TOT=TOT+pcantidad_i;
+								insert into bitacoraCor values (null,TOT,TOTE,TOTC,pcantidad_i,TOTF,FI,now(),pid_usuario);
+								select 'Corte de dia hecho' as mensaje;
+							end if;
+						end if;
+					end if;
+
+				else
+				select 'La sesion no existe' as mensaje;
+				end if;
+
+			else
+			select 'No tiene los privilegios para cerrar un corte de caja' as mensaje;
+			end if;
+END;
+/**************************************************************************************************************/
+Parte automatica del sistema parte de triggers y de sus respectivas tablas
+Nota verificar triger de ventas normales
+-------------------------Bitacora de la tabla de ventas-----------------------------------
+delimiter \\
+	CREATE TRIGGER Bv AFTER UPDATE ON ventas
+	FOR EACH ROW
+	BEGIN
+		if new.estado = 2 then
+		INSERT INTO BventasC values (null,new.id_venta,new.id_cuenta,old.cantidad,new.id_alimento,old.subtotal,now(),new.id_usuario);
+		else
+			if new.estado =1 then
+			INSERT INTO Bventas values(null,new.id_venta,new.id_cuenta,new.cantidad,old.cantidad,new.id_alimento,new.subtotal,old.subtotal,now(),new.id_usuario);
+                    	end if;
+		end if;
+	END \\
+delimiter \\
+
+create table Bventas (id_Bventa int primary key auto_increment,id_ventaN int, id_cuentaN int,cantidadN int,cantidadO int,id_alimentoN int,subtotalN float,subtotalO float,fecha datetime,id_usuarioN int);
+create table BventasC (id_BventasC int primary key auto_increment,id_ventaN int,id_cuentaN int,cantidadO int,id_alimentoN int,subtotalO float,fecha datetime,id_usuarioN int);
+
+-------------------------Bitacora de la tabla de complementos-----------------------------------
+-------------------------Bitacora de la tabla de ventas-----------------------------------
+delimiter \\
+	CREATE TRIGGER Bb AFTER UPDATE ON ventasb
+	FOR EACH ROW
+	BEGIN
+		if new.estado = 2 then
+		INSERT INTO BventasCb values (null,new.id_ventaB,new.id_cuenta,old.cantidad,new.id_bebida,old.subtotal,now(),new.id_usuario);
+		else
+			if new.estado =1 then
+			INSERT INTO Bventasb values(null,new.id_ventaB,new.id_cuenta,new.cantidad,old.cantidad,new.id_bebida,new.subtotal,old.subtotal,now(),new.id_usuario);
+                    	end if;
+		end if;
+	END \\
+delimiter \\
+
+create table Bventasb (id_Bventab int primary key auto_increment,id_ventaBN int, id_cuentabN int,cantidadbN int,cantidadbO int,id_bebidaN int,subtotalN float,subtotalO float,fecha datetime,id_usuarioN int);
+create table BventasCb (id_BventasC int primary key auto_increment,id_ventaBN int,id_cuentaN int,cantidadO int,id_bebidaN int,subtotalO float,fecha datetime,id_usuarioN int);
+
+-------------------------Bitacora de la tabla de complementos-----------------------------------
+delimiter \\
+
+	CREATE TRIGGER Bc AFTER UPDATE ON complementos
+	FOR EACH ROW
+	BEGIN
+		if new.estado = 2 then
+		INSERT INTO BcomC values(null,new.id_complemento,new.id_cuenta,new.descripcion,new.precio,new.cantidad,new.subtotal,now(),new.id_usuario);
+           	else
+			if new.estado = 1 then
+			INSERT INTO Bcom values(null,new.id_complemento,new.id_cuenta,new.descripcion,old.descripcion,new.precio,old.precio,new.cantidad,old.cantidad,new.subtotal,old.subtotal,now(),new.id_usuario);
+			end if;
+		end if;
+	END \\
+
+delimiter \\
+
+
+
+CREATE TABLE Bcom (id_Bcom int primary key auto_increment,id_complementoN int,id_cuentaN int,descripcionN varchar(30),descripcionO varchar(30),precioN float,precioO float,cantidadN int,cantidadO int,subtotalN float,subtotalO float,fecha datetime,id_usuarioN int);
+CREATE TABLE BcomC (id_BcomC int primary key auto_increment,id_complementoN int,id_cuentaN int,descripcion varchar(30),precio float,cantidad int,subtotal float,fecha datetime,id_usuarioN int);
+
+
+-------------------------Consultas de corte por dia-----------------------------------
+select sum(total),count(id_ticket) from tickets where estado=0 and  fecha between '2017-05-25 23:20' and '2017-05-25 23:35';
+select sum(campo) from (tabla) where condicones and (campo de fecha o comparar) between 'primer fecha o dato' and 'segunda fecha o dato';
+
+/*********************************************************************************************************************************************/
+ select * from t_sesiones order by id_sesion desc limit 1  consulta para sacar el ultimo registro del corte de caja
+
+/*Consulta para verificar la fecha actual contra la de la casilla deseada*/
+ select fecha_cad from surtido where fecha_cad=curdate();/*Curdate(); saca solo fecha , Now(); saca fecha y hora*/

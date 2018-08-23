@@ -1,0 +1,116 @@
+.labelCorte{
+	color: black;
+}
+
+#div_loc div
+	{
+		background-repeat: no-repeat;
+		background-position: center;
+		background-size: 90%;
+    	padding-top:2em;
+    	padding-bottom: 3em;
+    	margin: 0em;
+	}
+
+.mesa-libre{
+	background-image: url('../img/mesas/mesa_disp.png');
+	width: 78%;
+}
+.mesa-ocupada{
+	background-image: url('../img/mesas/mesa_ocupada.png');
+	width: 78%;
+}
+.mesa-fueraser{
+	background-image: url('../img/mesas/mesa_mant.png');
+	width: 78%;
+}
+
+div #btn_div{
+	padding: 0;
+	margin: 0;
+}
+.btn.btn_eliminar, .btn.btn_modificar{
+	padding: .5em;
+	color: white;
+}
+.btn.btn_informacion, .btn.btn_pagar, .btn.btn_reservar,.btn.btn_pagar_c{
+	padding: .5em;
+	color: white;
+}
+.btn.btn_pagar_c{
+	padding: .5em;
+	color:#1b5e20 ;
+}
+
+.btn.btn_pagar:hover{
+	color:#1b5e20;
+}
+
+.btn.btn_pagar_c:hover{
+	color:#e65100;
+}
+
+.btn.btn_informacion:hover{
+	color:#01579b;
+}
+
+.btn.btn_reservar:hover	{
+	color:#e65100; 
+}
+
+.btn.btn_eliminar:hover{
+	color: #f44336;
+}
+
+.btn.btn_modificar:hover{
+	color: #2196f3;
+}
+.ocupado{
+	background: #757575;
+}
+
+.libre{
+	background: #e0e0e0;
+}
+.ocupadoF{
+	background:#FDF8E4; 
+}
+.caducado{
+	background: #bd2443;
+}
+.caducado1{
+	background: white;
+}
+.caducado2{
+	background: #8fd304;
+}
+.caducado3{
+	background: #fbba00;
+}
+.caducado4{
+	background: #fd510b;
+}
+.caducado5{
+	background: #bd2443;
+}
+#lbl_locacion{
+	font-size: 1em;
+	color: white;
+}
+.toast{
+	background:#f44336;
+}
+::-webkit-input-placeholder{
+	color: black;
+}
+:-ms-input-placeholder{
+	color:black;
+}
+::-moz-placeholder{
+	color:black;
+	opacity: 0.5;
+}
+:-moz-placeholder{
+	color:blue;
+	opacity: 0.5;
+}

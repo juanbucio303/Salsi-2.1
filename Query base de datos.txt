@@ -1,0 +1,349 @@
+/* Seccion de Alimentos */
+create table alimentos (id_alimento int primary key auto_increment,Descripcion varchar(50), Precio float, id_categoria_a int, id_tipo_de_a int , estado int , cantidad_p float,id_ingrediente int);
+create table bebidas   (id_bebida int primary key auto_increment,  Descripcion varchar(50), Precio float, id_categoria_a int, id_tipo_de_a int,  estado int,  cantidad_p float,id_ingrediente int);
+create table categorias_a (id_categoria_a int primary key auto_increment,descripcion varchar(35) unique,estado int,tipo_c int);
+create table ingredientes (id_ingrediente int primary key auto_increment,Descripcion varchar(40) unique,cantidad float, estado int,fecha_c date,estado_c int,id_medida int);
+create table entradas (id_entrada int primary key auto_increment,id_ingrediente int, cantidad_e float,fecha_e date,fecha_c date,id_proveedor int,estado int);
+create table proveedores (id_proveedor int primary key auto_increment,descripcion varchar(30),telefono varchar(10),contacto varchar(50),estado int);
+create table Medida (id_medida int primary key auto_increment,descripcion varchar(25) unique);
+/*--------------------*/
+
+/* Seccion locacional*/
+create table locaciones (id_locacion int primary key auto_increment,numero varchar(35) unique,id_tipo_l int,id_ticket int, estado int);
+create table tipos_l (id_tipo_l int primary key auto_increment,descripcion varchar(35) unique);
+/*-------------------*/
+
+/* Seccion Adminitrativa */
+create table empleados (id_empleado int primary key auto_increment,nombre varchar(35),ap varchar(35),am varchar(35),telefono varchar(10));
+create table metodos_de_p (id_mp int primary key auto_increment,descripcion varchar(35) unique);
+create table descuentos (id_descuento int primary key auto_increment,monto float unique);
+create table usuarios(id_usuario int primary key auto_increment,nombre varchar(50),contraseña varchar(255),id_role int);
+create table role (id_role int primary key auto_increment, descripcion varchar(30));
+create table t_sesiones(id_sesion int primary key auto_increment,fecha_i datetime,estado_i int,fecha_c datetime,estado_c int,id_usuario_i int,id_usuario_c int);
+/*----------------------*/
+
+/*Seccion de cuentas*/
+create table ventas (id_venta int primary key auto_increment,cantidad int,id_alimento int,subtotal float,id_cuenta int,estado int,id_usuario int,tipo_v int);
+create table ventasB (id_ventaB int primary key auto_increment,cantidad int,id_bebida int,subtotal float,id_cuenta int,estado int,id_usuario int,tipo_v int,id_ingrediente_s int,cantidad_s float,id_ingrediente_ss int,cantidad_ss float);
+create table tickets (id_ticket int primary key auto_increment,total float,subtotal float, fecha datetime,id_empleado int,estado int,id_descuento int);
+create table complementos (id_complemento int primary key auto_increment,id_cuenta int,descripcion varchar(80),precio float,cantidad int,subtotal float,estado int,id_usuario int,tipo_v int);
+create table metodos_p (id_metodo_p int primary key auto_increment,id_mp int,id_ticket int,id_cuenta int);
+create table cuentas (id_cuenta int primary key auto_increment, descripcion int,id_locacion int,id_ticket int,estado int,subtotal float,total float,total_e float,total_c float,fecha datetime);
+/*----------------------*/
+
+/* Seccion de Consultas */
+create table BitacoraIn (id_ingredienteO int primary key auto_increment,DescripcionO varchar(40),cantidadO float, estadoO int,fecha_cO date,estado_cO int);
+create table bitacoraCor(id_bitacora int primary key auto_increment,total_c float,c_efectivo float,c_credito float,cantidad_i float,ganancia float,fecha_inicio datetime,fecha_corte datetime,id_usuario int);
+create table Bcom (id_Bcom int primary key auto_increment,id_complementoN int,id_cuentaN int,descripcionN varchar(30),descripcionO varchar(30),precioN float,precioO float,cantidadN int,cantidadO int,subtotalN float,subtotalO float,fecha datetime,id_usuarioN int);
+create table BcomC (id_BcomC int primary key auto_increment,id_complementoN int,id_cuentaN int,descripcion varchar(30),precio float,cantidad int,subtotal float,fecha datetime,id_usuarioN int);
+create table Bventas (id_Bventa int primary key auto_increment,id_ventaN int, id_cuentaN int,cantidadN int,cantidadO int,id_alimentoN int,subtotalN float,subtotalO float,fecha datetime,id_usuarioN int);
+create table BventasC (id_BventasC int primary key auto_increment,id_ventaN int,id_cuentaN int,cantidadO int,id_alimentoN int,subtotalO float,fecha datetime,id_usuarioN int);
+create table Bventasb (id_Bventab int primary key auto_increment,id_ventaBN int, id_cuentabN int,cantidadbN int,cantidadbO int,id_bebidaN int,subtotalN float,subtotalO float,fecha datetime,id_usuarioN int);
+create table BventasCb (id_BventasC int primary key auto_increment,id_ventaBN int,id_cuentaN int,cantidadO int,id_bebidaN int,subtotalO float,fecha datetime,id_usuarioN int);
+
+/*--------------------*/
+
+/* Datos */
+	/* Datos de seccion de Alimentos */
+		/*Categorias*/
+		insert into categorias_a values (null,'Ensaladas',1,1);
+		insert into categorias_a values (null,'Botana',1,1);
+		insert into categorias_a values (null,'Alitas',1,1);
+		insert into categorias_a values (null,'Pizza',1,1);
+		insert into categorias_a values (null,'Postre',1,1);
+		insert into categorias_a values (null,'Cafe',1,2);
+		insert into categorias_a values (null,'Bebida',1,2);
+		insert into categorias_a values (null,'Tequila y Mezcales',1,2);
+		insert into categorias_a values (null,'Whisky',1,2);
+		insert into categorias_a values (null,'Vodka',1,2);
+		insert into categorias_a values (null,'Ron',1,2);
+		insert into categorias_a values (null,'Brandy y Cognac',1,2);
+		insert into categorias_a values (null,'Ginebra',1,2);
+		insert into categorias_a values (null,'Licores',1,2);
+		insert into categorias_a values (null,'Vino',1,2);
+		insert into categorias_a values (null,'Cocteles',1,2);
+		insert into categorias_a values (null,'Sugerencias',1,1);
+		/*Categorias*/
+
+		/*Medidas*/
+		insert into medida values (null,'Kilogramos');
+		insert into medida values (null,'Unidades');
+		insert into medida values (null,'Minilitros');
+		/*Medidas*/
+
+		/*Proveedores*/
+		/*insert into proveedores values(null,'FEMSA','7221466710','Juan',1);
+		insert into proveedores values(null,'Corona','7221466200','Pepe',1);
+		insert into proveedores values(null,'ALITAS','7255466200','Rodrigo',1);
+		insert into proveedores values(null,'Papas','7221461000','Ana',1);*/
+		insert into proveedores values(null,'Generico','','Dueña del establecimiento',1)
+		/*Proveedores*/
+
+		/*Ingredientes*/
+		insert into ingredientes values(null,'Ninguno',0,1,'9999-12-12',1,2);
+		insert into ingredientes values(null,'Coca Cola',0,1,curdate(),1,2);
+		insert into ingredientes values(null,'Coca Cola Ligth',0,1,curdate(),1,2);
+		insert into ingredientes values(null,'Fresca',0,1,curdate(),1,2);
+		insert into ingredientes values(null,'Sprite',0,1,curdate(),1,2);
+		insert into ingredientes values(null,'Sprite Cero',0,1,curdate(),1,2);
+		insert into ingredientes values(null,'Sidral',0,1,curdate(),1,2);
+		insert into ingredientes values(null,'Fanta',0,1,curdate(),1,2);
+		insert into ingredientes values(null,'Delaware',0,1,curdate(),1,2);
+		insert into ingredientes values(null,'Botella de Agua',0,1,curdate(),1,2);
+		insert into ingredientes values(null,'Papas',0,1,curdate(),1,2);
+		insert into ingredientes values(null,'Cerveza Corona',0,1,curdate(),1,2);
+		insert into ingredientes values(null,'Cerveza Victoria',0,1,curdate(),1,2);
+		insert into ingredientes values(null,'Cerveza Pacifico',0,1,curdate(),1,2);
+		insert into ingredientes values(null,'Cerveza Leon',0,1,curdate(),1,2);
+		insert into ingredientes values(null,'Cerveza Modelo Especial',0,1,curdate(),1,2);
+		insert into ingredientes values(null,'Cerveza Negra Modelo',0,1,curdate(),1,2);
+		insert into ingredientes values(null,'Cerveza Corona Ligth',0,1,curdate(),1,2);
+		insert into ingredientes values(null,'Alitas',0,1,curdate(),1,1);
+		insert into ingredientes values(null,'Centenario Plata',0,1,curdate(),1,3);
+		insert into ingredientes values(null,'Centenario Reposado',0,1,curdate(),1,3);
+		insert into ingredientes values(null,'Don Julio',0,1,curdate(),1,3);
+		insert into ingredientes values(null,'Don Julio 70',0,1,curdate(),1,3);
+		insert into ingredientes values(null,'Herradura Blanco',0,1,curdate(),1,3);
+		insert into ingredientes values(null,'Herradura Plata',0,1,curdate(),1,3);
+		insert into ingredientes values(null,'Herradura Reposado',0,1,curdate(),1,3);
+		insert into ingredientes values(null,'Jose Cuervo',0,1,curdate(),1,3);
+		insert into ingredientes values(null,'Tradicional',0,1,curdate(),1,3);
+		insert into ingredientes values(null,'1800',0,1,curdate(),1,3);
+		insert into ingredientes values(null,'800 Reposado',0,1,curdate(),1,3);
+		insert into ingredientes values(null,'Buchanans',0,1,curdate(),1,3);
+		insert into ingredientes values(null,'Jack Daniels',0,1,curdate(),1,3);
+		insert into ingredientes values(null,'JB',0,1,curdate(),1,3);
+		insert into ingredientes values(null,'Absolut Azul',0,1,curdate(),1,3);
+		insert into ingredientes values(null,'Stolichnaya',0,1,curdate(),1,3);
+		insert into ingredientes values(null,'Appleton Blanco',0,1,curdate(),1,3);
+		insert into ingredientes values(null,'Appleton Especial',0,1,curdate(),1,3);
+		insert into ingredientes values(null,'Bacardi Añejo',0,1,curdate(),1,3);
+		insert into ingredientes values(null,'Bacardi Blanco',0,1,curdate(),1,3);
+		insert into ingredientes values(null,'Bacardi Limon',0,1,curdate(),1,3);
+		insert into ingredientes values(null,'Bacardi Razz',0,1,curdate(),1,3);
+		insert into ingredientes values(null,'Flor de Caña',0,1,curdate(),1,3);
+		insert into ingredientes values(null,'Havana Club',0,1,curdate(),1,3);
+		insert into ingredientes values(null,'Malibu',0,1,curdate(),1,3);
+		insert into ingredientes values(null,'Matesalem Platino',0,1,curdate(),1,3);
+		insert into ingredientes values(null,'Azteca de Oro',0,1,curdate(),1,3);
+		insert into ingredientes values(null,'Don pedro',0,1,curdate(),1,3);
+		insert into ingredientes values(null,'Fundador',0,1,curdate(),1,3);
+		insert into ingredientes values(null,'Terry',0,1,curdate(),1,3);
+		insert into ingredientes values(null,'Torres 10',0,1,curdate(),1,3);
+		insert into ingredientes values(null,'Hennessy V.S.O.P',0,1,curdate(),1,3);
+		insert into ingredientes values(null,'Beefeater',0,1,curdate(),1,3);
+		insert into ingredientes values(null,'Larios',0,1,curdate(),1,3);
+		insert into ingredientes values(null,'Agavero',0,1,curdate(),1,3);
+		insert into ingredientes values(null,'Amaretto Disarono',0,1,curdate(),1,3);
+		insert into ingredientes values(null,'Anis Chinchon Dulce',0,1,curdate(),1,3);
+		insert into ingredientes values(null,'Anis Chinchon Seco',0,1,curdate(),1,3);
+		insert into ingredientes values(null,'Baileys',0,1,curdate(),1,3);
+		insert into ingredientes values(null,'Licor de Pacharan',0,1,curdate(),1,3);
+		insert into ingredientes values(null,'Campari',0,1,curdate(),1,3);
+		insert into ingredientes values(null,'Dubo nnet',0,1,curdate(),1,3);
+		insert into ingredientes values(null,'Frangelico',0,1,curdate(),1,3);
+		insert into ingredientes values(null,'Jagermaister',0,1,curdate(),1,3);
+		insert into ingredientes values(null,'Kahlua',0,1,curdate(),1,3);
+		insert into ingredientes values(null,'Licor 43',0,1,curdate(),1,3);
+		insert into ingredientes values(null,'Midori',0,1,curdate(),1,3);
+		insert into ingredientes values(null,'Sambuca Negro',0,1,curdate(),1,3);
+		insert into ingredientes values(null,'Vermounth Rojo',0,1,curdate(),1,3);
+		insert into ingredientes values(null,'Vino',0,1,curdate(),1,3);
+
+		/*Ingredientes*/
+
+		/*Alimentos*/
+		insert into alimentos values (null,'Ensalada de atun',80.00,1,1,1,0,1);
+		insert into alimentos values (null,'Ensalada Pizzanlov',80.00,1,1,1,0,1);
+		insert into alimentos values (null,'Tabla de carnes frias',140.00,2,1,1,0,1);
+		insert into alimentos values (null,'Tabla de quesos',140.00,2,1,1,0,1);
+		insert into alimentos values (null,'Nuggets de pollo con papas',75.00,2,2,1,250,3);
+		insert into alimentos values (null,'Dedos de queso con papas',75.00,2,2,1,200,3);
+		insert into alimentos values (null,'Papas a la francesa 250gr',35.00,2,2,1,250,3);
+		insert into alimentos values (null,'Papas a la francesa 500gr',55.00,2,2,1,500,3);
+		insert into alimentos values (null,'Alitas media orden',65.00,3,1,1,0,1);
+		insert into alimentos values (null,'Alitas una orden',110.00,3,1,1,0,1);
+		insert into alimentos values (null,'Alitas orden doble',220.00,3,1,1,0,1);
+		insert into alimentos values (null,'Pizza de queso',110.00,4,1,1,0,1);
+		insert into alimentos values (null,'Pizza de peporoni',130.00,4,1,1,0,1);
+		insert into alimentos values (null,'Pizza hawaiana',130.00,4,1,1,0,1);
+		insert into alimentos values (null,'Pizza margarita',125.00,4,1,1,0,1);
+		insert into alimentos values (null,'Pizza vegetariana',135.00,4,1,1,0,1);
+		insert into alimentos values (null,'Pizza pastor',160.00,4,1,1,0,1);
+		insert into alimentos values (null,'Pizza napolitana',165.00,4,1,1,0,1);
+		insert into alimentos values (null,'Pizza pera y brie',160.00,4,1,1,0,1);
+		insert into alimentos values (null,'Pizza 4 quesos',170.00,4,1,1,0,1);
+		insert into alimentos values (null,'Pizza pizzanlov',175.00,4,1,1,0,1);
+		insert into alimentos values (null,'Pizza verde',170.00,4,1,1,0,1);
+		insert into alimentos values (null,'Tu pizza',185.00,4,1,1,0,1);
+		insert into alimentos values (null,'Pizza de nutella y fruta',45.00,5,1,1,0,1);
+		insert into alimentos values (null,'Pizza de mermelada y queso brie',45.00,5,1,1,0,1);
+		insert into alimentos values (null,'Pasteleria de la casa',50.00,5,1,1,0,1);
+		insert into alimentos values (null,'Helados',30.00,5,1,1,0,1);
+		/*Alimentos*/
+		/*Bebidas*/
+		insert into  bebidas values (null,'Cafe expreso',25.00,6,1,1,0,1);
+		insert into  bebidas values (null,'Cafe americano',25.00,6,1,1,0,1);
+		insert into  bebidas values (null,'Cafe late',35.00,6,1,1,0,1);
+		insert into  bebidas values (null,'Cafe capuchino',35.00,6,1,1,0,1);
+		insert into  bebidas values (null,'Cafe mocachino',35.00,6,1,1,0,1);
+		insert into  bebidas values (null,'Cafe frapuchino',35.00,6,1,1,0,1);
+		insert into  bebidas values (null,'Cafe affogato',45.00,6,1,1,0,1);
+		insert into  bebidas values (null,'Cafe chocolate BAILEYS',105.00,6,1,1,0,1);
+		insert into  bebidas values (null,'Cerveza corona',30.00,7,2,1,1,4);
+		insert into  bebidas values (null,'Cerveza victoria',30.00,7,2,1,1,4);
+		insert into  bebidas values (null,'Cerveza pacifico',30.00,7,2,1,1,4);
+		insert into  bebidas values (null,'Cerveza leon',30.00,7,2,1,1,4);
+		insert into  bebidas values (null,'Michelada (corona, victoria, pacifico,leon)',35.00,7,1,1,0,1);
+		insert into  bebidas values (null,'Cubana (corona, victoria, pacifico,leon)',40.00,7,1,1,0,1);
+		insert into  bebidas values (null,'Clamato (corona, victoria, pacifico,leon)',45.00,7,1,1,0,1);
+		insert into  bebidas values (null,'Cerveza Modelo especial',35.00,7,2,1,1,4);
+		insert into  bebidas values (null,'Cerveza Negra modelo',35.00,7,2,1,1,4);
+		insert into  bebidas values (null,'Cerveza corona light',35.00,7,2,1,1,4);
+		insert into  bebidas values (null,'Cerveza Michelada',40.00,7,1,1,0,4);
+		insert into  bebidas values (null,'Cerveza Cubana',45.00,7,1,1,0,4);
+		insert into  bebidas values (null,'Cerveza Clamato',50.00,7,1,1,0,4);
+		insert into  bebidas values (null,'Coca cola',20.00,7,2,1,1,2);
+		insert into  bebidas values (null,'Coca cola light',20.00,7,2,1,1,2);
+		insert into  bebidas values (null,'fresca',20.00,7,2,1,1,2);
+		insert into  bebidas values (null,'sprite',20.00,7,2,1,1,2);
+		insert into  bebidas values (null,'sprite zero',20.00,7,2,1,1,2);
+		insert into  bebidas values (null,'sidral',20.00,7,2,1,1,2);
+		insert into  bebidas values (null,'fanta',20.00,7,2,1,1,2);
+		insert into  bebidas values (null,'delaware',20.00,7,2,1,1,2);
+		insert into  bebidas values (null,'ginger ale',20.00,7,2,1,1,2);
+		insert into  bebidas values (null,'Botella de agua',20.00,7,2,1,1,2);
+		insert into  bebidas values (null,'Canica',30.00,7,1,1,0,1);
+		insert into  bebidas values (null,'Conga',35.00,7,1,1,0,4);
+		insert into  bebidas values (null,'Clamato preparado',35.00,7,1,1,0,4);
+		insert into  bebidas values (null,'Limonada o Naranjada',30.00,7,1,1,0,1);
+		insert into  bebidas values (null,'Malteada',40.00,7,1,1,0,1);
+		insert into  bebidas values (null,'Frappe',35.00,7,1,1,0,1);
+		insert into  bebidas values (null,'Chocolate',30.00,7,1,1,0,1);
+		insert into  bebidas values (null,'Leche',25.00,7,1,1,0,1);
+		insert into  bebidas values (null,'Centenario Plata',60.00,8,1,1,0,1);
+		insert into  bebidas values (null,'Centenario Reposado',60.00,8,1,1,0,1);
+		insert into  bebidas values (null,'Don Julio',90.00,8,1,1,0,1);
+		insert into  bebidas values (null,'Don Julio 70',105.00,8,1,1,0,1);
+		insert into  bebidas values (null,'Herradura Blanco',80.00,8,1,1,0,1);
+		insert into  bebidas values (null,'Herradura Plata',80.00,8,1,1,0,1);
+		insert into  bebidas values (null,'Herradura Reposado',90.00,8,1,1,0,1);
+		insert into  bebidas values (null,'Jose Cuervo',60.00,8,1,1,0,1);
+		insert into  bebidas values (null,'Tradicional',70.00,8,1,1,0,1);
+		insert into  bebidas values (null,'1800',70.00,8,1,1,0,1);
+		insert into  bebidas values (null,'800 Reposado',75.00,8,1,1,0,1);
+		insert into  bebidas values (null,'Mezcla Peloton',75.00,8,1,1,0,1);
+		insert into  bebidas values (null,'Etiqueta Negra',125.00,9,1,1,0,1);
+		insert into  bebidas values (null,'Etiqueta Roja',85.00,9,1,1,0,1);
+		insert into  bebidas values (null,'Buchanans',125.00,9,1,1,0,1);
+		insert into  bebidas values (null,'Jack Daniels',85.00,9,1,1,0,1);
+		insert into  bebidas values (null,'JB',80.00,9,1,1,0,1);
+		insert into  bebidas values (null,'Absolut Azul',80.00,10,1,1,0,1);
+		insert into  bebidas values (null,'Grey Goose',95.00,10,1,1,0,1);
+		insert into  bebidas values (null,'Stolichnaya',80.00,10,1,1,0,1);
+		insert into  bebidas values (null,'Appleton Blanco',65.00,11,1,1,0,1);
+		insert into  bebidas values (null,'Appleton Especial',65.00,11,1,1,0,1);
+		insert into  bebidas values (null,'Bacardi Añejo',65.00,11,1,1,0,1);
+		insert into  bebidas values (null,'Bacardi Blanco',65.00,11,1,1,0,1);
+		insert into  bebidas values (null,'Bacardi Limon',70.00,11,1,1,0,1);
+		insert into  bebidas values (null,'Bacardi Razz',70.00,11,1,1,0,1);
+		insert into  bebidas values (null,'Flor de Caña',65.00,11,1,1,0,1);
+		insert into  bebidas values (null,'Havana Club',65.00,11,1,1,0,1);
+		insert into  bebidas values (null,'Malibu',70.00,11,1,1,0,1);
+		insert into  bebidas values (null,'Matesalem Platino',70.00,11,1,1,0,1);
+		insert into  bebidas values (null,'Azteca de Oro',65.00,12,1,1,0,1);
+		insert into  bebidas values (null,'Don Pedro',60.00,12,1,1,0,1);
+		insert into  bebidas values (null,'Fundador',70.00,12,1,1,0,1);
+		insert into  bebidas values (null,'Terry',75.00,12,1,1,0,1);
+		insert into  bebidas values (null,'Torres 10',75.00,12,1,1,0,1);
+		insert into  bebidas values (null,'Hennessy V.S.O.P',140.00,12,1,1,0,1);
+		insert into  bebidas values (null,'Beefeater',85.00,13,1,1,0,1);
+		insert into  bebidas values (null,'Larios',70.00,13,1,1,0,1);
+		insert into  bebidas values (null,'Agavero',65.00,14,1,1,0,1);
+		insert into  bebidas values (null,'Amaretto Disarono',85.00,14,1,1,0,1);
+		insert into  bebidas values (null,'Anis Chinchon Dulce',65.00,14,1,1,0,1);
+		insert into  bebidas values (null,'Anis Chinchon Seco',65.00,14,1,1,0,1);
+		insert into  bebidas values (null,'Baileys',85.00,14,1,1,0,1);
+		insert into  bebidas values (null,'Licor de Pacharan',75.00,14,1,1,0,1);
+		insert into  bebidas values (null,'Campari',65.00,14,1,1,0,1);
+		insert into  bebidas values (null,'Dubo nnet',65.00,14,1,1,0,1);
+		insert into  bebidas values (null,'Frangelico',85.00,14,1,1,0,1);
+		insert into  bebidas values (null,'Jagermaister',85.00,14,1,1,0,1);
+		insert into  bebidas values (null,'Kahlua',55.00,14,1,1,0,1);
+		insert into  bebidas values (null,'Licor 43',95.00,14,1,1,0,1);
+		insert into  bebidas values (null,'Midori',70.00,14,1,1,0,5);
+		insert into  bebidas values (null,'Sambuca Negro',85.00,14,1,1,0,1);
+		insert into  bebidas values (null,'Vermounth Rojo',60.00,14,1,1,0,1);
+		insert into  bebidas values (null,'Copa de Vino',60.00,15,1,1,0,1);
+		insert into  bebidas values (null,'Bloody Mary',85.00,16,1,1,0,1);
+		insert into  bebidas values (null,'Caipirinha',85.00,16,1,1,0,1);
+		insert into  bebidas values (null,'Mojito',105.00,16,1,1,0,1);
+		insert into  bebidas values (null,'Daikiri',90.00,16,1,1,0,1);
+		insert into  bebidas values (null,'Margarita',105.00,16,1,1,0,1);
+		insert into  bebidas values (null,'Martini',105.00,16,1,1,0,1);
+		insert into  bebidas values (null,'Paloma',90.00,16,1,1,0,1);
+		insert into  bebidas values (null,'Piña colada',85.00,16,1,1,0,1);
+		insert into  bebidas values (null,'Sol y sombra',95.00,16,1,1,0,1);
+		/*Bebidas*/
+
+	/*----------------*/
+	/*Datos Seccion de locaciones*/
+		insert into tipos_l values (null,'Barra');
+		insert into tipos_l values (null,'Mesa');
+		insert into tipos_l values (null,'Terraza');
+
+		insert into locaciones values (null,1,1,0,1);
+		insert into locaciones values (null,2,1,0,1);
+		insert into locaciones values (null,3,1,0,1);
+		insert into locaciones values (null,4,1,0,1);
+		insert into locaciones values (null,5,1,0,1);
+		insert into locaciones values (null,6,2,0,1);
+		insert into locaciones values (null,7,2,0,1);
+		insert into locaciones values (null,8,2,0,1);
+		insert into locaciones values (null,9,2,0,1);
+		insert into locaciones values (null,10,2,0,1);
+		insert into locaciones values (null,11,3,0,1);
+		insert into locaciones values (null,12,3,0,1);
+		insert into locaciones values (null,13,3,0,1);
+		insert into locaciones values (null,14,3,0,1);
+		insert into locaciones values (null,15,3,0,1);
+	/*-------------------------*/
+
+	/*Datos Seccion de Administrativa*/
+		insert into role values(null,'Administrador');
+		insert into role values(null,'Normal');
+
+		insert into metodos_de_p values (null,'Efectivo');
+		insert into metodos_de_p values (null,'Tarjeta de credito');
+
+		insert into descuentos values (null,0);
+		insert into descuentos values (null,5);
+		insert into descuentos values (null,10);
+		insert into descuentos values (null,15);
+		insert into descuentos values (null,20);
+		insert into descuentos values (null,25);
+		insert into descuentos values (null,30);
+		insert into descuentos values (null,35);
+		insert into descuentos values (null,40);
+		insert into descuentos values (null,45);
+		insert into descuentos values (null,50);
+		insert into descuentos values (null,55);
+		insert into descuentos values (null,60);
+		insert into descuentos values (null,65);
+		insert into descuentos values (null,70);
+		insert into descuentos values (null,75);
+		insert into descuentos values (null,80);
+		insert into descuentos values (null,85);
+		insert into descuentos values (null,90);
+		insert into descuentos values (null,95);
+		insert into descuentos values (null,100);
+
+		insert into usuarios values (null,'puch','puchito',1);
+		insert into usuarios values (null,'capi','123456',2);
+	/*-------------------------*/
+/*-------*/
+/*
+select count(id_ingrediente) as btn from ingredientes where  estado_c!=1 or if(id_medida=1 and cantidad<=3000,'1','0')=1 or if(id_medida=2 and cantidad<=50 and id_ingrediente>1,'1','0')=1 or if(id_medida=3 and cantidad<=3000,'1','0')=1;
+
+Consulta para notificacion y cambio de color de boton
+*/
