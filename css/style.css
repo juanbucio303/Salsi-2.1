@@ -13,18 +13,21 @@
 	}
 
 .mesa-libre{
-	background-image: url('../img/mesas/mesa_disp.png');
+	background: green;
 	width: 78%;
 }
 .mesa-ocupada{
-	background-image: url('../img/mesas/mesa_ocupada.png');
+	background:red;
 	width: 78%;
 }
 .mesa-fueraser{
 	background-image: url('../img/mesas/mesa_mant.png');
 	width: 78%;
 }
-
+.ticket{
+	background-image: url('../img/ticket.png');
+	width: 78%;
+}
 div #btn_div{
 	padding: 0;
 	margin: 0;
@@ -36,6 +39,9 @@ div #btn_div{
 .btn.btn_informacion, .btn.btn_pagar, .btn.btn_reservar,.btn.btn_pagar_c{
 	padding: .5em;
 	color: white;
+}
+.cursor{
+	cursor: pointer;
 }
 .btn.btn_pagar_c{
 	padding: .5em;
@@ -55,7 +61,7 @@ div #btn_div{
 }
 
 .btn.btn_reservar:hover	{
-	color:#e65100; 
+	color:#e65100;
 }
 
 .btn.btn_eliminar:hover{
@@ -73,7 +79,7 @@ div #btn_div{
 	background: #e0e0e0;
 }
 .ocupadoF{
-	background:#FDF8E4; 
+	background:#FDF8E4;
 }
 .caducado{
 	background: #bd2443;
@@ -113,4 +119,8 @@ div #btn_div{
 :-moz-placeholder{
 	color:blue;
 	opacity: 0.5;
+}
+.ticke{
+	position: absolute;
+	border: solid 1px;
 }

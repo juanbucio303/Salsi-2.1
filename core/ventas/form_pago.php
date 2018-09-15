@@ -1,6 +1,6 @@
-<div class="modal" id="modal_pago" style="width: 80%; height: 80%;">	
-		<div class="modal-content"> 
-			<div class="modal-header"> 
+<div class="modal" id="modal_pago" style="width: 80%; height: 80%;">
+		<div class="modal-content">
+			<div class="modal-header">
 				<h4 class="modal-title" id="myModalLabel">
 					Pagar Cuenta
 				</h4> <!-- se especifica el titulo del modal para diferenciarlos-->
@@ -15,7 +15,7 @@
 							if(isset($_GET["id_cuenta"]))
 								echo '<input value="'.$_GET["id_cuenta"].'" id="id_cuenta" name="id_cuenta" type="hidden">';
 						?>
-						
+
 						<?php
 							if(isset($_GET["id_ticket"]))
 								echo '<input value="'.$_GET["id_ticket"].'" id="id_ticket" name="id_ticket" type="hidden">';
@@ -25,18 +25,18 @@
 							if(isset($_GET["id_tipo_l"]))
 								echo '<input value="'.$_GET["id_tipo_l"].'" id="id_tipo_l" name="id_tipo_l" type="hidden">';
 						?>
-				
-					<div class="input-field">	
+
+					<div class="input-field">
 						<label for="DES" id="d">Descuento</label>
 						<select value=""  class="validate" name="DES" id="DES" required>
 						</select>
-					</div>	
+					</div>
 					<br>
 
 					<div class="input-field">
 						<label for="MP" id="m">Metodo de Pago</label>
 						<select value=""  class="validate" name="MP" id="MP" required>
-							 
+
 						</select>
 					</div>
 
@@ -44,14 +44,14 @@
 					<div class="input-field">
 						<label for="CAN" id="c">Recibido</label>
 						<input type="text" id="CAN" name="CAN" placeholder="Recibido" class="validate" required>
-					</div>	
+					</div>
 					<br>
 					<div>
 						<label for="EMP" id="e">Empleado que atendio</label>
 						<select value=""  class="validate" name="EMP" id="EMP" required>
-							 
+
 						</select>
-					</div>	
+					</div>
 					<br>
 					<div class="input-field">
 						<label for="TOT" id="t">Total</label>
@@ -59,16 +59,16 @@
 					</div>
 
 				</form>
-			
+
 			</div>
 
-			<div class="modal-footer"> 
+			<div class="modal-footer">
 				<input type="button" class="waves-effect waves-light btn modal-action modal-close red" data-dismiss="modal" value="Cerrar"></input>
 				<input  type="button" class="btn waves-effect waves-light blue" id="Pagar" value="Pagar">
 				<input  type="button" class="btn waves-effect waves-light red" id="Imprimir" value="Imprimir">
 			</div >
-		</div > 
-	
+		</div >
+
 </div >
 <aside id="content">
 </aside>
@@ -100,11 +100,11 @@ $("#Imprimir").click(function(){
 				var dat=JSON.parse(res);
 				dat=dat[0];
 				$("#TOT").val(dat["subtotal"]);
-				
+
 			});
 <?php
 		}
-?>	
+?>
 
 
 	$("#form_pagos").validate({
@@ -128,7 +128,7 @@ $("#Imprimir").click(function(){
 				number:"Solo se Aceptan Caracteres Numericos",
 				min:"No puede recibir menos de cero o cero"
 
-				
+
 			},
 			EMP:{
 				required:"Es Necesario Seleccionar un Empleado"
@@ -148,10 +148,10 @@ $("#Imprimir").click(function(){
 					Materialize.toast("<h5 style='color:#212121;'>"+info[0]+"</h5>",2500,'rounded');
 					get_all(<?php echo $_GET["id_tipo_l"];?>);
 					get_all_cuenta();
-				});	
+				});
 			$("#modal_pago").modal("close");
 			});
-			
+
 		}
 	});
 
@@ -201,24 +201,24 @@ $("#Imprimir").click(function(){
 	}
 
 </script>
-<aside class="modal" id="Modal_confirm_pagar"> 
-	<div class="modal-dialog"> 
-		<div class="modal-content"> 
+<aside class="modal" id="Modal_confirm_pagar">
+	<div class="modal-dialog">
+		<div class="modal-content">
 
 
-			<div class="modal-header"> 
+			<div class="modal-header">
 				<h4 class="modal-title" id="myModalLabel">
 				</h4> <!-- se especifica el titulo del modal para diferenciarlos-->
 			</div >
 			<div class="modal-body">
-				 Seguro que desea realizar la operacion	
+				 Seguro que desea realizar la operacion
 			</div>
-			<div class="modal-footer"> 
-			<input type="button" class="waves-effect waves-light btn modal-action modal-close red" data-dismiss="modal" value="Cerrar"></input>  
+			<div class="modal-footer">
+			<input type="button" class="waves-effect waves-light btn modal-action modal-close red" data-dismiss="modal" value="Cerrar"></input>
 			<input  type="button" class="btn blue" id="btn_confirm_modificar" value="Aceptar">
 		</div>
-		</div > 
-	</div > 
+		</div >
+	</div >
 </aside>
 <style type="text/css">
 	input-field.select-dropdown

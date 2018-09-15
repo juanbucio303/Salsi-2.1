@@ -230,7 +230,8 @@ function get_all_v()
 			for (var i=0;i<datos.length;i++)
 			{
 				var info=datos[i];
-				cod_html+="<tr><td>"+info['descripcion']+"</td><td>"+info['precio']+"</td><td>"+info['cantidad']+"</td><td>"+info['subtotal']+"</td><td>"+info['cuentas']+"</td><td><a class='waves-effect btn-flat  btn_eliminar' data-id='"+info["id_venta"]+"' data-id_cuenta='"+info["id_cuenta"]+"' data-id_alimento='"+info["id_alimento"]+"' data-id_tipo_v='"+info["tipo_v"]+"' style='color: #ef5350'><span class='material-icons'>cancel</span></a></td><td><a class='waves-effect btn-flat  btn_modificar' data-id='"+info["id_venta"]+"' data-id_cuenta='"+info["id_cuenta"]+"' data-id_alimento='"+info["id_alimento"]+"' data-id_tipo_v='"+info["tipo_v"]+"' style='color: #1976d2'><span class='material-icons'>edit</span></a></td></tr>"
+				// cod_html+="<tr><td>"+info['descripcion']+"</td><td>"+info['precio']+"</td><td>"+info['cantidad']+"</td><td>"+info['subtotal']+"</td><td>"+info['cuentas']+"</td><td><a class='waves-effect btn-flat  btn_eliminar' data-id='"+info["id_venta"]+"' data-id_cuenta='"+info["id_cuenta"]+"' data-id_alimento='"+info["id_alimento"]+"' data-id_tipo_v='"+info["tipo_v"]+"' style='color: #ef5350'><span class='material-icons'>cancel</span></a></td><td><a class='waves-effect btn-flat  btn_modificar' data-id='"+info["id_venta"]+"' data-id_cuenta='"+info["id_cuenta"]+"' data-id_alimento='"+info["id_alimento"]+"' data-id_tipo_v='"+info["tipo_v"]+"' style='color: #1976d2'><span class='material-icons'>edit</span></a></td></tr>"
+				cod_html+="<tr><td>"+info['descripcion']+"</td><td>"+info['cantidad']+"</td><td>"+info['subtotal']+"</td><td><a class='waves-effect btn-flat  btn_eliminar' data-id='"+info["id_venta"]+"' data-id_cuenta='"+info["id_cuenta"]+"' data-id_alimento='"+info["id_alimento"]+"' data-id_tipo_v='"+info["tipo_v"]+"' style='color: #ef5350'><span class='material-icons'>cancel</span></a> <a class='waves-effect btn-flat  btn_modificar' data-id='"+info["id_venta"]+"' data-id_cuenta='"+info["id_cuenta"]+"' data-id_alimento='"+info["id_alimento"]+"' data-id_tipo_v='"+info["tipo_v"]+"' style='color: #1976d2'><span class='material-icons'>edit</span></a> </td><td></td></tr>"
 			}
 			$("#content_table").html(cod_html);
 		});
@@ -244,7 +245,7 @@ function get_all_tot()
 			var datos=JSON.parse(result);
 			var cod="";
 			datos=datos[0];
-			cod="<h5><label style='color:black; font-size:1em;'>El total al momento es: "+datos[0]+"</lable></h5>";
+			cod="Total: "+datos[0];
 
 			$("#tot").html(cod);
 		});

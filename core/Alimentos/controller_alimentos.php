@@ -12,6 +12,15 @@ require_once("../conexion.php");
 				$datos[]=$row;
 			print_r(json_encode($datos,JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE));
 		break;
+		case "count_cat":
+			$sql="select COUNT(id_categoria_a) as num from categorias_a;";
+			$result=$conexion->query($sql);
+			$datos=array();
+			while ($row=$result->fetch_array())
+				$datos[]=$row;
+
+			print_r($datos[0]["num"]);
+		break;
 		case "get_all_id":
 
 				$id_categoria_a=$_POST["id_categoria_a"];

@@ -137,8 +137,9 @@ require_once("../conexion.php");
 				$DES=isset($_POST["DES"])?$_POST["DES"]:0;
 				$EMP=isset($_POST["EMP"])?$_POST["EMP"]:0;
 				$CAN=$_POST["CAN"];
-
-				$sql="CALL PAGO_C('".$_POST["id_cuenta"]."','".$MP."','".$CAN."','".$EMP."','".$DES."')";
+				// echo $CAN." ".$_POST['id'];
+				// die;
+				$sql="CALL PAGO_C('".$_POST["id"]."','".$MP."','".$CAN."','".$EMP."','".$DES."')";
 				$resultado=$conexion->query($sql) or trigger_error($conexion->error."[$sql]");
 				$datos=array();
 				while($row=$resultado->fetch_array())

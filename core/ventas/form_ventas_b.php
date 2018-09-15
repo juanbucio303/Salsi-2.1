@@ -1,13 +1,13 @@
-	<div class="modal" id="modal_f_ventas" style="width: 80%; height: 80%;">	
-		<div class="modal-content"> 
-			<div class="modal-header"> 
-				 
+	<div class="modal" id="modal_f_ventas" style="width: 80%; height: 80%;">
+		<div class="modal-content">
+			<div class="modal-header">
+
 				<h4 class="modal-title" id="myModalLabel">
 				Agregar Venta de Bebida
 				</h4> <!-- se especifica el titulo del modal para diferenciarlos-->
 			</div >
 				<div class="modal-body">
-					<form action="#!" method="post" id="form_ventas">						
+					<form action="#!" method="post" id="form_ventas">
 						<input type="hidden" value="AGREGARVB" id="action" name="action" type="hidden">
 						<!-- se especifica el valor del value para que ejecute el case correspondiente-->
 
@@ -15,13 +15,13 @@
 							if(isset($_GET["id_locacion"]))
 								echo '<input value="'.$_GET["id_locacion"].'"id="id_locacion" name="id_locacion" type="hidden">';
 						?>
-							
+
 							<div class="row">
 
 								<div class="input-field col s6">
 									<label for="Cat" id="c">Categoria de Alimento</label>
 									<select value=""  class="validate" name="Cat" id="Cat" required>
-										 
+
 									</select>
 									<br>
 								</div>
@@ -29,7 +29,7 @@
 								<div class="input-field col s6">
 									<label for="Cu" id="cuen">Cuenta</label>
 									<select value=""  class="validate" name="Cu" id="Cu" required>
-										 
+
 									</select>
 									<br>
 								</div>
@@ -37,7 +37,7 @@
 								<div class="input-field col s4">
 									<label for="Beb" id="b">Bebida</label>
 									<select value=""  class="validate" name="Beb" id="Beb" required>
-										 
+
 									</select>
 									<br>
 								</div>
@@ -45,14 +45,14 @@
 								<div class="input-field col s4">
 									<label for="Ing" id="i">Ingrediente Extra No.1</label>
 									<select value=""  class="validate" name="Ing" id="Ing" required>
-										 
+
 									</select>
 									<br>
 								</div>
 								<div class="input-field col s4">
 									<label for="Ing2" id="in">Ingrediente Extra No.2</label>
 									<select value=""  class="validate" name="Ing2" id="Ing2" required>
-										 
+
 									</select>
 									<br>
 								</div>
@@ -74,12 +74,12 @@
 							</div>
 					</form>
 				</div>
-				<div class="modal-footer"> 
-					<input type="button" class="waves-effect waves-light btn modal-action modal-close red"" data-dismiss="modal" value="Cerrar"></input> 
+				<div class="modal-footer">
+					<input type="button" class="waves-effect waves-light btn modal-action modal-close red" data-dismiss="modal" value="Cerrar"></input> 
 					<input  type="button" class="btn blue" id="Vender" name="Vender" value="Aceptar">
 				</div >
-		</div > 
-	</div > 
+		</div >
+	</div >
 <script type="text/javascript">
 var id_locacion=$("#id_locacion").val();
 get_all_i()
@@ -108,7 +108,7 @@ $("#Cat").change(function(){
 			Beb:{required:true},
 			Can:{required:true,number:true,max:99,min:1,maxlength:2},
 			Cu:{required:true},
-			
+
 		},
 
 		messages:{
@@ -124,7 +124,7 @@ $("#Cat").change(function(){
 				min:"No puede vender menos de un producto",
 				maxlength:"Esta excediento la cantidad permitida para vender",
 				number:"Solo se aceptan caracteres numericos"
-				
+
 			},
 			Cu:{
 				required:"Es Necesario Seleccionar una cuenta"
@@ -200,7 +200,7 @@ $("#Cat").change(function(){
 				$("#Ing2").html(cod_html);
 				$('select').meterial_select();
 			});
-		}	
+		}
 
 </script>
 <style type="text/css">
